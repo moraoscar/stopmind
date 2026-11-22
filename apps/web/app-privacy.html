@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Política de Privacidad — StopMind!</title>
+  <meta name="description" content="Política de Privacidad oficial de la aplicación móvil StopMind! (CXVOne)." />
+  <style>
+    :root {
+      --bg: #f7f6f2;
+      --surface: #ffffff;
+      --ink: #161822;
+      --muted: #5a6073;
+      --border: #e4e0d5;
+      --accent: #4f46e5;
+      --accent-soft: #eef2ff;
+      --badge: #d1fae5;
+      --badge-ink: #047857;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f1117;
+        --surface: #171a24;
+        --ink: #f3f4f6;
+        --muted: #9ca3af;
+        --border: #2a2f3e;
+        --accent: #818cf8;
+        --accent-soft: #1e1b4b;
+        --badge: #064e3b;
+        --badge-ink: #6ee7b7;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+    .wrap {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 32px 20px 64px;
+    }
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .logo {
+      background: #ef4444;
+      color: #ffffff;
+      font-weight: 900;
+      letter-spacing: 1px;
+      padding: 8px 14px;
+      border-radius: 12px;
+      font-size: 18px;
+    }
+    .lang-nav {
+      display: flex;
+      gap: 8px;
+    }
+    .lang-btn {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--ink);
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none;
+    }
+    .lang-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px 24px;
+      margin-bottom: 20px;
+    }
+    .pill {
+      display: inline-block;
+      background: var(--badge);
+      color: var(--badge-ink);
+      font-size: 12px;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 999px;
+      margin-bottom: 10px;
+    }
+    h1 { margin: 0 0 8px; font-size: 28px; line-height: 1.2; }
+    h2 { margin: 26px 0 10px; font-size: 19px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+    p, li { color: var(--ink); font-size: 15px; }
+    .meta { color: var(--muted); font-size: 13px; margin: 0 0 16px; }
+    ul { padding-left: 20px; margin: 8px 0 14px; }
+    li { margin-bottom: 6px; }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 12px;
+      margin: 18px 0;
+    }
+    .summary-item {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 14px;
+    }
+    .summary-item strong { display: block; font-size: 14px; margin-bottom: 4px; }
+    .summary-item span { color: var(--muted); font-size: 13px; }
+    code {
+      background: var(--accent-soft);
+      color: var(--accent);
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 24px;
+    }
+    a { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header>
+      <div class="brand">
+        <span class="logo">StopMind!</span>
+        <span class="meta" style="margin:0;">com.cxvone.stopmind</span>
+      </div>
+      <nav class="lang-nav" aria-label="Idioma / Language">
+        <a class="lang-btn" href="#es">Español</a>
+        <a class="lang-btn" href="#en">English</a>
+      </nav>
+    </header>
+
+    <!-- ESPAÑOL -->
+    <article id="es" class="card" lang="es">
+      <span class="pill">Privacidad primero · Sin cuentas ni rastreo</span>
+      <h1>Política de Privacidad de StopMind!</h1>
+      <p class="meta">Última actualización: 21 de noviembre de 2026 · Responsable: CXVOne</p>
+
+      <p>
+        En <strong>StopMind!</strong> respetamos tu privacidad. Esta política explica de forma clara qué datos utiliza la aplicación móvil (iOS y Android), cómo se procesan y cuáles son tus derechos.
+      </p>
+
+      <div class="summary-grid">
+        <div class="summary-item">
+          <strong>Sin cuentas ni PII</strong>
+          <span>No pedimos registro, correo, teléfono, ubicación ni acceso a contactos.</span>
+        </div>
+        <div class="summary-item">
+          <strong>Wi-Fi local</strong>
+          <span>Las partidas multijugador ocurren directamente en tu red Wi-Fi local.</span>
+        </div>
+        <div class="summary-item">
+          <strong>Sin publicidad ni rastreo</strong>
+          <span>No usamos SDKs publicitarios ni rastreamos tu actividad entre apps.</span>
+        </div>
+      </div>
+
+      <h2>1. Información que NO recopilamos</h2>
+      <p>StopMind! no recopila ni almacena información de identificación personal (PII), incluyendo nombre real, correo electrónico, número de teléfono, ubicación GPS, fotos, contactos ni identificadores publicitarios (IDFA/AAID).</p>
+
+      <h2>2. Permisos del dispositivo y uso local</h2>
+      <ul>
+        <li><strong>Red Local / Wi-Fi (Bonjour <code>_stopmind._tcp</code>)</strong>: Se utiliza exclusivamente para descubrir y conectar dispositivos dentro de la misma red Wi-Fi durante partidas locales. El apodo temporal elegido y las palabras escritas en la ronda se transmiten únicamente entre los dispositivos de la sala local.</li>
+        <li><strong>Cámara (opcional)</strong>: Se utiliza únicamente en tiempo real para escanear el código QR de invitación de otro dispositivo en la misma red Wi-Fi. No se capturan, almacenan ni envían imágenes ni videos. Puedes jugar y unirte mediante código manual sin otorgar acceso a la cámara.</li>
+      </ul>
+
+      <h2>3. Revisión inteligente de palabras (Servicio de IA opcional)</h2>
+      <p>
+        Cuando el anfitrión mantiene activada la opción <strong>&ldquo;Revisión inteligente de palabras&rdquo;</strong> y el dispositivo cuenta con acceso a internet, StopMind! envía al backend seguro de StopMind! en AWS únicamente pares anónimos de <code>{ categoría, palabra }</code> escritos durante la ronda — <strong>nunca</strong> se envían apodos de jugadores, códigos de sala ni datos personales.
+      </p>
+      <ul>
+        <li>Nuestro servidor utiliza el modelo <strong>Google Gemini API</strong> exclusivamente para verificar si cada palabra es un término válido correspondiente a su categoría.</li>
+        <li>Los veredictos anónimos (p. ej. <em>fruta::manzana → válida</em>) pueden guardarse en caché temporal hasta por 90 días para reducir latencia y llamadas repetidas.</li>
+        <li>Si juegas sin internet o desactivas esta opción en la pantalla de configuración, la app funciona 100% de forma local sin enviar ningún dato a internet.</li>
+      </ul>
+
+      <h2>4. Registros técnicos y seguridad</h2>
+      <p>
+        Para proteger el servicio de validación contra abuso (limitación de tasa / anti-DoS), nuestro servidor en AWS aplica controles de seguridad cifrados en tránsito mediante HTTPS (TLS 1.2/1.3). Los identificadores técnicos de red se pseudonimizan mediante hash criptográfico unidireccional SHA-256 antes de registrarse y se purgan automáticamente en un plazo máximo de 30 días.
+      </p>
+
+      <h2>5. Privacidad de menores</h2>
+      <p>
+        StopMind! es un juego familiar de palabras sin cuentas, sin chat público por internet ni recopilación de datos personales, por lo que no recopilamos deliberadamente datos personales de menores de edad.
+      </p>
+
+      <h2>6. Derechos del usuario y contacto</h2>
+      <p>
+        Puedes ejercer tus derechos de consulta, rectificación o supresión (atendidos en un plazo máximo de 5 días hábiles) o resolver cualquier duda sobre privacidad escribiendo a:
+        <a href="mailto:privacy@cxvone.com">privacy@cxvone.com</a>.
+      </p>
+    </article>
+
+    <!-- ENGLISH -->
+    <article id="en" class="card" lang="en">
+      <span class="pill">Privacy-First · No Accounts, No Tracking</span>
+      <h1>StopMind! Privacy Policy</h1>
+      <p class="meta">Last updated: November 21, 2026 · Developer: CXVOne</p>
+
+      <p>
+        <strong>StopMind!</strong> is a local Wi-Fi word-categories party game designed with privacy by default. This policy explains what data the iOS and Android apps access and how it is handled.
+      </p>
+
+      <h2>1. Data We Do Not Collect</h2>
+      <p>
+        StopMind! does not require account registration and does not collect personal information (PII) such as email addresses, phone numbers, precise location, contacts, photos, or advertising identifiers. We do not use third-party advertising SDKs or cross-app tracking.
+      </p>
+
+      <h2>2. Device Permissions</h2>
+      <ul>
+        <li><strong>Local Network / Wi-Fi (Bonjour <code>_stopmind._tcp</code>)</strong>: Used solely to discover and connect players on the same local Wi-Fi network. Temporary nicknames and game answers are exchanged directly between devices on your local network.</li>
+        <li><strong>Camera (Optional)</strong>: Used exclusively to scan a host device's local QR code to join a match. No photos or videos are recorded, stored, or transmitted. Players who decline camera access can still join using Wi-Fi auto-discovery or a 4-character room code.</li>
+      </ul>
+
+      <h2>3. Optional AI Word Validation</h2>
+      <p>
+        When the host enables <strong>&ldquo;Smart Word Review&rdquo;</strong> and internet connectivity is available, StopMind! sends only anonymous <code>{ category, word }</code> pairs from the round to StopMind!'s HTTPS backend hosted on AWS — <strong>never</strong> player nicknames, room codes, or personal identifiers.
+      </p>
+      <ul>
+        <li>Our backend uses the <strong>Google Gemini API</strong> solely to verify whether a submitted word is a real word matching its category.</li>
+        <li>Anonymous validation verdicts (e.g., <em>fruit::apple → valid</em>) may be cached for up to 90 days to improve speed and minimize external requests.</li>
+        <li>If the host disables this option or plays offline on local Wi-Fi, zero data leaves your local network.</li>
+      </ul>
+
+      <h2>4. Security & Technical Logs</h2>
+      <p>
+        All requests to our validation API use HTTPS (TLS 1.2/1.3). To prevent abuse (rate limiting), network identifiers are pseudonymized with a one-way cryptographic SHA-256 hash prior to logging, and technical logs are automatically purged after 30 days.
+      </p>
+
+      <h2>5. Children's Privacy</h2>
+      <p>
+        StopMind! has no online accounts, no public online matchmaking, and no internet chat. We do not knowingly collect personal information from children.
+      </p>
+
+      <h2>6. Contact & Data Requests</h2>
+      <p>
+        For privacy questions or data deletion requests (processed within 5 business days), please contact
+        <a href="mailto:privacy@cxvone.com">privacy@cxvone.com</a>.
+      </p>
+    </article>
+
+    <footer>
+      &copy; 2026 CXVOne · StopMind! · <a href="https://stopmind.cxvone.com/app-privacy">stopmind.cxvone.com/app-privacy</a>
+    </footer>
+  </main>
+</body>
+</html>

@@ -1,0 +1,164 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  StopMind! Secure Serverless Validation API (AWS Free Tier / Always Free)
+  Implements OWASP ASVS 5.0, API Security 2023, LLM Top 10 v2.0, and least-privilege IAM.
+
+Parameters:
+  StageName:
+    Type: String
+    Default: prod
+    AllowedValues:
+      - dev
+      - prod
+  GeminiKeyParamName:
+    Type: String
+    Default: /stopmind/prod/gemini-api-key
+    Description: SSM Parameter Store SecureString name for Gemini Free Tier API key (Standard tier = $0)
+  LogPepperParamName:
+    Type: String
+    Default: /stopmind/prod/log-pepper
+    Description: SSM Parameter Store SecureString name for SHA-256 log integrity pepper
+  AlertEmail:
+    Type: String
+    Default: ''
+    Description: Optional email for $1 USD AWS Budget anti-DoW alert
+
+Conditions:
+  HasAlertEmail: !Not [!Equals [!Ref AlertEmail, '']]
+
+Globals:
+  Function:
+    Runtime: nodejs22.x
+    Architectures:
+      - arm64
+    MemorySize: 256
+    Timeout: 8
+
+Resources:
+  # Single-table DynamoDB (Always Free: 25GB + 25 RCU/WCU)
+  # Stores: (1) Validated word cache (TTL 90d), (2) Distributed rate-limit counters (TTL 2m)
+  StopMindCacheTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub stopmind-api-store-${StageName}
+      BillingMode: PROVISIONED
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+      SSESpecification:
+        SSEEnabled: true
+
+  # CloudWatch Log Group with strict 30-day retention (Always Free: 5GB/mo, Ley 8968 hygiene)
+  ApiLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/stopmind-api-${StageName}
+      RetentionInDays: 30
+
+  # HTTP API v2 with TLS 1.2/1.3 and built-in anti-DoS/DoW throttling
+  StopMindHttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: !Ref StageName
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: 20
+        ThrottlingRateLimit: 10
+
+  # Validation Lambda (Always Free: 1M requests/month + 400,000 GB-s/month)
+  StopMindApiFunction:
+    Type: AWS::Serverless::Function
+    DependsOn: ApiLogGroup
+    Properties:
+      FunctionName: !Sub stopmind-api-${StageName}
+      CodeUri: dist/
+      Handler: handler.handler
+      ReservedConcurrentExecutions: 10
+      Environment:
+        Variables:
+          NODE_ENV: production
+          DYNAMODB_TABLE_NAME: !Ref StopMindCacheTable
+          SSM_GEMINI_KEY_PARAM: !Ref GeminiKeyParamName
+          SSM_LOG_PEPPER_PARAM: !Ref LogPepperParamName
+          RATE_LIMIT_MAX_PER_MINUTE: '20'
+      Policies:
+        # Principle of Least Privilege: ONLY specific table CRUD & exact SSM SecureString parameters
+        - Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:GetItem
+                - dynamodb:PutItem
+                - dynamodb:UpdateItem
+                - dynamodb:BatchGetItem
+              Resource: !GetAtt StopMindCacheTable.Arn
+            - Effect: Allow
+              Action:
+                - ssm:GetParameter
+              Resource:
+                - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${GeminiKeyParamName}
+                - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${LogPepperParamName}
+            - Effect: Allow
+              Action:
+                - kms:Decrypt
+              Resource: '*'
+              Condition:
+                StringEquals:
+                  kms:ViaService: !Sub ssm.${AWS::Region}.amazonaws.com
+      Events:
+        HealthCheck:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref StopMindHttpApi
+            Path: /v1/health
+            Method: GET
+        ValidateRound:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref StopMindHttpApi
+            Path: /v1/validate-round
+            Method: POST
+        WordHint:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref StopMindHttpApi
+            Path: /v1/hint
+            Method: POST
+
+  # Optional $1 USD Monthly Budget Alert (Anti-Denial of Wallet protection)
+  AntiDowBudget:
+    Type: AWS::Budgets::Budget
+    Condition: HasAlertEmail
+    Properties:
+      Budget:
+        BudgetName: !Sub stopmind-anti-dow-${StageName}
+        BudgetType: COST
+        TimeUnit: MONTHLY
+        BudgetLimit:
+          Amount: 1
+          Unit: USD
+      NotificationsWithSubscribers:
+        - Notification:
+            NotificationType: ACTUAL
+            ComparisonOperator: GREATER_THAN
+            Threshold: 80
+            ThresholdType: PERCENTAGE
+          Subscribers:
+            - SubscriptionType: EMAIL
+              Address: !Ref AlertEmail
+
+Outputs:
+  ApiBaseUrl:
+    Description: HTTPS base URL for EXPO_PUBLIC_API_URL in apps/mobile
+    Value: !Sub https://${StopMindHttpApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}
+  CacheTableName:
+    Description: DynamoDB table name for cache and rate limiting
+    Value: !Ref StopMindCacheTable

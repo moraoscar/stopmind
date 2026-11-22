@@ -1,0 +1,7 @@
+{
+  "name": "lan-server",
+  "version": "1.0.0",
+  "description": "Embedded LAN WebSocket server for phone-to-phone WiFi multiplayer",
+  "main": "index.ts",
+  "private": true
+}

@@ -1,0 +1,53 @@
+{
+  "name": "api",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/api/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "outputs": ["{projectRoot}/dist"],
+      "options": {
+        "cwd": "apps/api",
+        "command": "npx esbuild src/handler.ts --bundle --platform=node --target=node22 --format=cjs --outfile=dist/handler.js --minify --sourcemap --external:@aws-sdk/*"
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/api",
+        "command": "npx tsc --noEmit"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/api",
+        "command": "npx tsx --test src/__tests__/api.test.ts"
+      }
+    },
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/api",
+        "command": "npx tsx watch src/local.ts"
+      }
+    },
+    "sam-build": {
+      "dependsOn": ["build"],
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/api",
+        "command": "sam build"
+      }
+    },
+    "sam-deploy": {
+      "dependsOn": ["sam-build"],
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/api",
+        "command": "sam deploy --guided"
+      }
+    }
+  }
+}

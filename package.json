@@ -1,22 +1,29 @@
 {
-  "name": "stopgame",
+  "name": "stopmind-workspace",
   "version": "1.0.0",
-  "main": "index.ts",
-  "dependencies": {
-    "expo": "~58.0.26",
-    "expo-status-bar": "~58.0.5",
-    "react": "19.3.0",
-    "react-native": "0.88.1"
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "postinstall": "node scripts/patch-expo-jsi.mjs",
+    "mobile:start": "nx run mobile:start",
+    "mobile:ios": "nx run mobile:ios",
+    "mobile:android": "nx run mobile:android",
+    "mobile:prebuild": "nx run mobile:prebuild",
+    "api:dev": "nx run api:dev",
+    "api:build": "nx run api:build",
+    "api:test": "nx run api:test",
+    "api:deploy": "nx run api:sam-deploy",
+    "privacy:deploy": "aws s3 cp apps/web/app-privacy.html s3://stopmind-cxvone-site-252104135843/app-privacy --content-type 'text/html; charset=utf-8' --cache-control 'public, max-age=300' && aws s3 cp apps/web/app-privacy.html s3://stopmind-cxvone-site-252104135843/app-privacy/index.html --content-type 'text/html; charset=utf-8' --cache-control 'public, max-age=300' && aws cloudfront create-invalidation --distribution-id E1EZTDYBHDEGE --paths '/app-privacy' '/app-privacy/*'",
+    "typecheck": "nx run-many -t typecheck",
+    "lint": "nx run-many -t lint",
+    "test": "nx run-many -t test",
+    "graph": "nx graph"
   },
   "devDependencies": {
-    "@types/react": "~19.3.0",
+    "nx": "^22.0.0",
     "typescript": "~6.0.3"
-  },
-  "scripts": {
-    "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
-    "web": "expo start --web"
-  },
-  "private": true
+  }
 }

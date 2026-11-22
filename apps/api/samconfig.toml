@@ -1,0 +1,14 @@
+version = 0.1
+
+[default.deploy.parameters]
+stack_name = "stopmind-api-prod"
+resolve_s3 = true
+s3_prefix = "stopmind-api-prod"
+region = "us-east-1"
+capabilities = "CAPABILITY_IAM"
+confirm_changeset = true
+parameter_overrides = "StageName=\"prod\" GeminiKeyParamName=\"/stopmind/prod/gemini-api-key\" LogPepperParamName=\"/stopmind/prod/log-pepper\" AlertEmail=\"moraoscar@icloud.com\""
+image_repositories = []
+
+[default.global.parameters]
+region = "us-east-1"
