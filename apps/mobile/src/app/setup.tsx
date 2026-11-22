@@ -760,10 +760,10 @@ export default function SetupScreen() {
                 <Text style={styles.offlineInfo}>
                   {connectionStatus === 'connecting'
                     ? roomMode === 'online'
-                      ? 'Creando sala online en Cloudflare…'
+                      ? 'Creando sala online…'
                       : 'Conectando al servidor WiFi local…'
                     : !onlineAvailable && roomMode === 'online'
-                      ? 'Para activar salas online, despliega apps/realtime en Cloudflare Workers (costo $0) y configura EXPO_PUBLIC_ONLINE_WS_URL.'
+                      ? 'El modo Online no está disponible en este momento. Puedes jugar en Wi-Fi local sin internet.'
                       : 'No se detectó sala activa. Puedes jugar solo o reconectar para invitar jugadores.'}
                 </Text>
                 <View style={styles.offlineActions}>

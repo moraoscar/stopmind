@@ -610,7 +610,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     const base = getOnlineRealtimeBaseUrl();
     if (!base) {
       setErrorMessage(
-        'Modo Online aún no configurado. Despliega apps/realtime en Cloudflare Workers y agrega EXPO_PUBLIC_ONLINE_WS_URL.'
+        'Modo Online no disponible en este momento. Usa Wi-Fi local para jugar sin internet.'
       );
       return false;
     }

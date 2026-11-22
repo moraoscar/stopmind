@@ -163,8 +163,8 @@
           <span>No pedimos registro, correo, teléfono, ubicación ni acceso a contactos.</span>
         </div>
         <div class="summary-item">
-          <strong>Wi-Fi local</strong>
-          <span>Las partidas multijugador ocurren directamente en tu red Wi-Fi local.</span>
+          <strong>Wi-Fi local u Online privado</strong>
+          <span>Juega sin internet en tu Wi-Fi o en salas privadas efímeras por código.</span>
         </div>
         <div class="summary-item">
           <strong>Sin publicidad ni rastreo</strong>
@@ -181,27 +181,37 @@
         <li><strong>Cámara (opcional)</strong>: Se utiliza únicamente en tiempo real para escanear el código QR de invitación de otro dispositivo en la misma red Wi-Fi. No se capturan, almacenan ni envían imágenes ni videos. Puedes jugar y unirte mediante código manual sin otorgar acceso a la cámara.</li>
       </ul>
 
-      <h2>3. Revisión inteligente de palabras (Servicio de IA opcional)</h2>
+      <h2>3. Salas Online privadas (Opcional)</h2>
       <p>
-        Cuando el anfitrión mantiene activada la opción <strong>&ldquo;Revisión inteligente de palabras&rdquo;</strong> y el dispositivo cuenta con acceso a internet, StopMind! envía al backend seguro de StopMind! en AWS únicamente pares anónimos de <code>{ categoría, palabra }</code> escritos durante la ronda — <strong>nunca</strong> se envían apodos de jugadores, códigos de sala ni datos personales.
+        Si el usuario elige explícitamente la opción <strong>&ldquo;Online&rdquo;</strong> para jugar a distancia con amigos mediante un código privado de 4 caracteres o código QR, la sesión de la partida se coordina en tiempo real mediante conexiones WebSocket cifradas (<code>WSS</code> / TLS 1.3) a través de servidores en la nube de terceros:
       </p>
       <ul>
-        <li>Nuestro servidor utiliza el modelo <strong>Google Gemini API</strong> exclusivamente para verificar si cada palabra es un término válido correspondiente a su categoría.</li>
+        <li>Únicamente se transmiten en memoria temporal (RAM) el apodo elegido para la sala, la configuración de la partida y las palabras escritas durante cada ronda.</li>
+        <li><strong>Cero almacenamiento persistente</strong>: cuando los jugadores salen de la sala, el estado se descarta inmediatamente de la memoria.</li>
+        <li><strong>Sin desconocidos ni chat abierto</strong>: no existe emparejamiento público con extraños ni chat libre; solo pueden unirse personas que reciban el código privado de la sala.</li>
+      </ul>
+
+      <h2>4. Revisión inteligente de palabras (Servicio de IA opcional)</h2>
+      <p>
+        Cuando el anfitrión mantiene activada la opción <strong>&ldquo;Revisión inteligente de palabras&rdquo;</strong> y el dispositivo cuenta con acceso a internet, StopMind! envía a nuestro servidor seguro en la nube únicamente pares anónimos de <code>{ categoría, palabra }</code> escritos durante la ronda — <strong>nunca</strong> se envían apodos de jugadores, códigos de sala ni datos personales.
+      </p>
+      <ul>
+        <li>Nuestro servidor utiliza un proveedor externo de inteligencia artificial exclusivamente para verificar si cada palabra es un término válido correspondiente a su categoría.</li>
         <li>Los veredictos anónimos (p. ej. <em>fruta::manzana → válida</em>) pueden guardarse en caché temporal hasta por 90 días para reducir latencia y llamadas repetidas.</li>
         <li>Si juegas sin internet o desactivas esta opción en la pantalla de configuración, la app funciona 100% de forma local sin enviar ningún dato a internet.</li>
       </ul>
 
-      <h2>4. Registros técnicos y seguridad</h2>
+      <h2>5. Registros técnicos y seguridad</h2>
       <p>
-        Para proteger el servicio de validación contra abuso (limitación de tasa / anti-DoS), nuestro servidor en AWS aplica controles de seguridad cifrados en tránsito mediante HTTPS (TLS 1.2/1.3). Los identificadores técnicos de red se pseudonimizan mediante hash criptográfico unidireccional SHA-256 antes de registrarse y se purgan automáticamente en un plazo máximo de 30 días.
+        Todas las comunicaciones remotas opcionales (validación de palabras y salas Online) viajan cifradas en tránsito mediante HTTPS / WSS (TLS 1.2/1.3). Para proteger el servicio de validación contra abuso (limitación de tasa / anti-DoS), los identificadores técnicos de red se pseudonimizan mediante hash criptográfico unidireccional SHA-256 antes de registrarse y se purgan automáticamente en un plazo máximo de 30 días.
       </p>
 
-      <h2>5. Privacidad de menores</h2>
+      <h2>6. Privacidad de menores</h2>
       <p>
-        StopMind! es un juego familiar de palabras sin cuentas, sin chat público por internet ni recopilación de datos personales, por lo que no recopilamos deliberadamente datos personales de menores de edad.
+        StopMind! es un juego familiar de palabras sin cuentas, sin chat público, sin emparejamiento con desconocidos ni recopilación de datos personales, por lo que no recopilamos deliberadamente datos personales de menores de edad.
       </p>
 
-      <h2>6. Derechos del usuario y contacto</h2>
+      <h2>7. Derechos del usuario y contacto</h2>
       <p>
         Puedes ejercer tus derechos de consulta, rectificación o supresión (atendidos en un plazo máximo de 5 días hábiles) o resolver cualquier duda sobre privacidad escribiendo a:
         <a href="mailto:privacy@cxvone.com">privacy@cxvone.com</a>.
@@ -229,27 +239,37 @@
         <li><strong>Camera (Optional)</strong>: Used exclusively to scan a host device's local QR code to join a match. No photos or videos are recorded, stored, or transmitted. Players who decline camera access can still join using Wi-Fi auto-discovery or a 4-character room code.</li>
       </ul>
 
-      <h2>3. Optional AI Word Validation</h2>
+      <h2>3. Optional Private Online Rooms</h2>
       <p>
-        When the host enables <strong>&ldquo;Smart Word Review&rdquo;</strong> and internet connectivity is available, StopMind! sends only anonymous <code>{ category, word }</code> pairs from the round to StopMind!'s HTTPS backend hosted on AWS — <strong>never</strong> player nicknames, room codes, or personal identifiers.
+        When a player explicitly selects <strong>&ldquo;Online&rdquo;</strong> mode to play remotely with friends via a private 4-character room code or QR code, live round state is relayed over encrypted WebSockets (<code>WSS</code> / TLS 1.3) using third-party cloud infrastructure:
       </p>
       <ul>
-        <li>Our backend uses the <strong>Google Gemini API</strong> solely to verify whether a submitted word is a real word matching its category.</li>
+        <li>Only the temporary room nickname, game settings, and words entered during the match are held in ephemeral in-memory state (RAM) while the room is active.</li>
+        <li><strong>Zero permanent storage</strong>: as soon as players leave the room, room state is discarded from memory.</li>
+        <li><strong>No public matchmaking or open chat</strong>: only invited players with the private room code can join.</li>
+      </ul>
+
+      <h2>4. Optional AI Word Validation</h2>
+      <p>
+        When the host enables <strong>&ldquo;Smart Word Review&rdquo;</strong> and internet connectivity is available, StopMind! sends only anonymous <code>{ category, word }</code> pairs from the round to our secure cloud backend — <strong>never</strong> player nicknames, room codes, or personal identifiers.
+      </p>
+      <ul>
+        <li>Our backend uses a third-party artificial intelligence provider solely to verify whether a submitted word is a real word matching its category.</li>
         <li>Anonymous validation verdicts (e.g., <em>fruit::apple → valid</em>) may be cached for up to 90 days to improve speed and minimize external requests.</li>
         <li>If the host disables this option or plays offline on local Wi-Fi, zero data leaves your local network.</li>
       </ul>
 
-      <h2>4. Security & Technical Logs</h2>
+      <h2>5. Security & Technical Logs</h2>
       <p>
-        All requests to our validation API use HTTPS (TLS 1.2/1.3). To prevent abuse (rate limiting), network identifiers are pseudonymized with a one-way cryptographic SHA-256 hash prior to logging, and technical logs are automatically purged after 30 days.
+        All optional remote communications (word validation and Online rooms) use encrypted HTTPS / WSS (TLS 1.2/1.3). To prevent abuse (rate limiting), network identifiers on the validation API are pseudonymized with a one-way cryptographic SHA-256 hash prior to logging, and technical logs are automatically purged after 30 days.
       </p>
 
-      <h2>5. Children's Privacy</h2>
+      <h2>6. Children's Privacy</h2>
       <p>
-        StopMind! has no online accounts, no public online matchmaking, and no internet chat. We do not knowingly collect personal information from children.
+        StopMind! has no online accounts, no public matchmaking with strangers, and no open chat. We do not knowingly collect personal information from children.
       </p>
 
-      <h2>6. Contact & Data Requests</h2>
+      <h2>7. Contact & Data Requests</h2>
       <p>
         For privacy questions or data deletion requests (processed within 5 business days), please contact
         <a href="mailto:privacy@cxvone.com">privacy@cxvone.com</a>.

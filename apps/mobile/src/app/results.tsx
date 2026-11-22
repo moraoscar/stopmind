@@ -81,7 +81,7 @@ export default function ResultsScreen() {
               ? `STOP por ${roundResults.stoppedByName}`
               : 'Tiempo terminado'}
             {roundResults.validatedBy === 'gemini'
-              ? ' · ✨ IA Gemini'
+              ? ' · ✨ Revisión IA'
               : ' · Revisión local'}
           </Text>
         </View>
