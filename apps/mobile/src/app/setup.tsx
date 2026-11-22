@@ -5,6 +5,7 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   Switch,
   Text,
@@ -39,6 +40,8 @@ export default function SetupScreen() {
     config,
     updateConfig,
     connectionStatus,
+    roomMode,
+    onlineAvailable,
     isPhoneHost,
     room,
     qrPayload,
@@ -46,6 +49,7 @@ export default function SetupScreen() {
     serverUrl,
     setServerUrl,
     createLanRoom,
+    createOnlineRoom,
     startGame,
     leaveGame,
     errorMessage,
@@ -632,16 +636,75 @@ export default function SetupScreen() {
             )}
           </View>
 
-          {/* 4. Invite Players (WiFi QR) */}
+          {/* 4. Invite Players (WiFi Local / Online) */}
           <View style={styles.card}>
             <View style={styles.cardHeader}>
               <View style={styles.cardTitleRow}>
-                <Ionicons name="people" size={18} color={COLORS.indigo} />
-                <Text style={styles.cardTitle}>Invitar jugadores (WiFi)</Text>
+                <Ionicons
+                  name={roomMode === 'online' ? 'globe-outline' : 'people'}
+                  size={18}
+                  color={COLORS.indigo}
+                />
+                <Text style={styles.cardTitle}>Invitar jugadores</Text>
               </View>
               <Text style={styles.badgeCount}>
                 {playersCount} {playersCount === 1 ? 'jugador' : 'jugadores'}
               </Text>
+            </View>
+
+            {/* Mode Switcher: WiFi Local vs Online */}
+            <View style={styles.modeSwitchRow}>
+              <Pressable
+                onPress={() => {
+                  clearError();
+                  if (roomMode !== 'lan' || connectionStatus !== 'connected') {
+                    void createLanRoom();
+                  }
+                }}
+                style={[
+                  styles.modeSwitchBtn,
+                  roomMode === 'lan' && styles.modeSwitchBtnActive,
+                ]}
+              >
+                <Ionicons
+                  name="wifi"
+                  size={15}
+                  color={roomMode === 'lan' ? COLORS.white : COLORS.ink}
+                />
+                <Text
+                  style={[
+                    styles.modeSwitchText,
+                    roomMode === 'lan' && styles.modeSwitchTextActive,
+                  ]}
+                >
+                  Wi-Fi local
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => {
+                  clearError();
+                  void createOnlineRoom();
+                }}
+                style={[
+                  styles.modeSwitchBtn,
+                  roomMode === 'online' && styles.modeSwitchBtnActive,
+                ]}
+              >
+                <Ionicons
+                  name="globe-outline"
+                  size={15}
+                  color={roomMode === 'online' ? COLORS.white : COLORS.ink}
+                />
+                <Text
+                  style={[
+                    styles.modeSwitchText,
+                    roomMode === 'online' && styles.modeSwitchTextActive,
+                  ]}
+                >
+                  Online
+                </Text>
+              </Pressable>
             </View>
 
             {connectionStatus === 'connected' && room ? (
@@ -658,33 +721,64 @@ export default function SetupScreen() {
                   ))}
                 </View>
 
-                <Pressable
-                  onPress={() => setQrVisible(true)}
-                  style={({ pressed }) => [
-                    styles.qrButton,
-                    pressed && styles.qrButtonPressed,
-                  ]}
-                >
-                  <Ionicons name="qr-code" size={20} color="#FFFFFF" />
-                  <Text style={styles.qrButtonText}>
-                    Mostrar QR de invitación (Sala {room.roomCode})
-                  </Text>
-                </Pressable>
+                <View style={styles.inviteActionRow}>
+                  <Pressable
+                    onPress={() => setQrVisible(true)}
+                    style={({ pressed }) => [
+                      styles.qrButton,
+                      styles.flex,
+                      pressed && styles.qrButtonPressed,
+                    ]}
+                  >
+                    <Ionicons name="qr-code" size={18} color={COLORS.white} />
+                    <Text style={styles.qrButtonText}>
+                      QR · Sala {room.roomCode}
+                    </Text>
+                  </Pressable>
+
+                  <Pressable
+                    onPress={() => {
+                      const msg =
+                        roomMode === 'online'
+                          ? `¡Únete a mi sala online de STOPMind! Código: ${room.roomCode}${qrPayload ? `\n${qrPayload}` : ''}`
+                          : `¡Únete a mi sala WiFi de STOPMind! Código: ${room.roomCode}`;
+                      void Share.share({ message: msg });
+                    }}
+                    style={styles.shareIconBtn}
+                    accessibilityLabel="Compartir invitación"
+                  >
+                    <Ionicons
+                      name="share-social-outline"
+                      size={20}
+                      color={COLORS.indigo}
+                    />
+                  </Pressable>
+                </View>
               </>
             ) : (
               <View style={styles.offlineCard}>
                 <Text style={styles.offlineInfo}>
                   {connectionStatus === 'connecting'
-                    ? 'Conectando al servidor WiFi local…'
-                    : 'No se detectó el servidor WiFi local. Puedes jugar solo o iniciar el servidor con "npm run server" para invitar con QR.'}
+                    ? roomMode === 'online'
+                      ? 'Creando sala online en Cloudflare…'
+                      : 'Conectando al servidor WiFi local…'
+                    : !onlineAvailable && roomMode === 'online'
+                      ? 'Para activar salas online, despliega apps/realtime en Cloudflare Workers (costo $0) y configura EXPO_PUBLIC_ONLINE_WS_URL.'
+                      : 'No se detectó sala activa. Puedes jugar solo o reconectar para invitar jugadores.'}
                 </Text>
                 <View style={styles.offlineActions}>
                   <Pressable
-                    onPress={handleReconnect}
+                    onPress={() =>
+                      roomMode === 'online'
+                        ? void createOnlineRoom()
+                        : handleReconnect()
+                    }
                     style={styles.reconnectBtn}
                   >
                     <Ionicons name="refresh" size={16} color={COLORS.indigo} />
-                    <Text style={styles.reconnectText}>Reconectar WiFi</Text>
+                    <Text style={styles.reconnectText}>
+                      {roomMode === 'online' ? 'Reintentar Online' : 'Reconectar WiFi'}
+                    </Text>
                   </Pressable>
                   <Pressable
                     onPress={() => setQrVisible(true)}
@@ -701,7 +795,18 @@ export default function SetupScreen() {
               </View>
             )}
 
-            {isPhoneHost ? (
+            {roomMode === 'online' ? (
+              <View style={styles.advancedToggle}>
+                <Ionicons
+                  name="cloud-done-outline"
+                  size={14}
+                  color={COLORS.emerald}
+                />
+                <Text style={styles.advancedToggleText}>
+                  Sala Online · Comparte el código con amigos a distancia
+                </Text>
+              </View>
+            ) : isPhoneHost ? (
               <View style={styles.advancedToggle}>
                 <Ionicons name="phone-portrait-outline" size={14} color={COLORS.emerald} />
                 <Text style={styles.advancedToggleText}>
@@ -771,6 +876,7 @@ export default function SetupScreen() {
           roomCode={room?.roomCode ?? null}
           wsUrl={effectiveWsUrl}
           players={room?.players ?? []}
+          isOnline={roomMode === 'online'}
         />
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -1182,6 +1288,48 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: SPACING.sm,
+  },
+  modeSwitchRow: {
+    flexDirection: 'row',
+    backgroundColor: COLORS.bg,
+    borderRadius: RADII.lg,
+    padding: SPACING.xxs,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    gap: SPACING.xxs,
+  },
+  modeSwitchBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.xs,
+    paddingVertical: SPACING.md - 1,
+    borderRadius: RADII.sm,
+  },
+  modeSwitchBtnActive: {
+    backgroundColor: COLORS.indigo,
+  },
+  modeSwitchText: {
+    fontSize: FONT_SIZES.md,
+    fontWeight: FONT_WEIGHTS.extrabold,
+    color: COLORS.ink,
+  },
+  modeSwitchTextActive: {
+    color: COLORS.white,
+  },
+  inviteActionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+  shareIconBtn: {
+    width: SIZES.touchTarget,
+    height: SIZES.touchTarget,
+    borderRadius: RADII.xl,
+    backgroundColor: COLORS.indigoSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   playerPill: {
     flexDirection: 'row',

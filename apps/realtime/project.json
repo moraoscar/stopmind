@@ -1,0 +1,36 @@
+{
+  "name": "realtime",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/realtime/src",
+  "projectType": "application",
+  "targets": {
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/realtime",
+        "command": "npx wrangler dev"
+      }
+    },
+    "deploy": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/realtime",
+        "command": "npx wrangler deploy"
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/realtime",
+        "command": "npx tsc --noEmit"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/realtime",
+        "command": "npx tsx --test src/__tests__/roomEngine.test.ts"
+      }
+    }
+  }
+}

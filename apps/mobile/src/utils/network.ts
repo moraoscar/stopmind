@@ -29,11 +29,52 @@ export function getDefaultLanServerUrl(): string {
   return `ws://192.168.1.100:${DEFAULT_SERVER_PORT}`;
 }
 
+const ROOM_CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+export function generateRandomRoomCode(length = 4): string {
+  let code = '';
+  for (let i = 0; i < length; i++) {
+    code += ROOM_CODE_CHARS[Math.floor(Math.random() * ROOM_CODE_CHARS.length)];
+  }
+  return code;
+}
+
+export function getOnlineRealtimeBaseUrl(): string {
+  const raw = process.env.EXPO_PUBLIC_ONLINE_WS_URL;
+  if (typeof raw !== 'string' || !raw.trim()) return '';
+  const trimmed = raw.trim().replace(/\/+$/, '');
+  if (trimmed.startsWith('https://')) {
+    return trimmed.replace(/^https:\/\//, 'wss://');
+  }
+  if (trimmed.startsWith('http://')) {
+    return trimmed.replace(/^http:\/\//, 'ws://');
+  }
+  if (trimmed.startsWith('wss://') || trimmed.startsWith('ws://')) {
+    return trimmed;
+  }
+  return `wss://${trimmed}`;
+}
+
+export function buildOnlineRoomWsUrl(roomCode: string, baseOverride?: string): string {
+  const base = (baseOverride ?? getOnlineRealtimeBaseUrl()).replace(/\/+$/, '');
+  const code = roomCode.trim().toUpperCase();
+  if (!base || !code) return '';
+  return `${base}/room/${encodeURIComponent(code)}`;
+}
+
+export function isOnlineWsUrl(url: string): boolean {
+  const trimmed = url.trim().toLowerCase();
+  return trimmed.startsWith('wss://') || trimmed.includes('/room/');
+}
+
 export function normalizeServerUrl(input: string): string {
   const trimmed = input.trim();
   if (!trimmed) return getDefaultLanServerUrl();
   if (trimmed.startsWith('ws://') || trimmed.startsWith('wss://')) {
     return trimmed;
+  }
+  if (trimmed.startsWith('https://')) {
+    return trimmed.replace(/^https:\/\//, 'wss://');
   }
   if (trimmed.startsWith('http://')) {
     return trimmed.replace(/^http:\/\//, 'ws://');

@@ -1,0 +1,17 @@
+name = "stopmind-realtime"
+main = "src/index.ts"
+compatibility_date = "2025-05-01"
+workers_dev = true
+
+[vars]
+# Reuses your existing $0 AWS Lambda + Gemini validation backend
+VALIDATION_API_URL = "https://fhkmc2g834.execute-api.us-east-1.amazonaws.com/prod"
+
+[[durable_objects.bindings]]
+name = "ROOMS"
+class_name = "StopMindRoomDO"
+
+# SQLite-backed Durable Objects are included in the Cloudflare Workers $0 Free Plan
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["StopMindRoomDO"]

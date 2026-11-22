@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+  <!-- Allows local WiFi peer-to-peer WebSockets (ws://192.168.x.x:3001 / hotspot LAN)
+       while all cloud endpoints (AWS API, Cloudflare Realtime) strictly use HTTPS/WSS. -->
+  <base-config cleartextTrafficPermitted="true">
+    <trust-anchors>
+      <certificates src="system" />
+    </trust-anchors>
+  </base-config>
+</network-security-config>

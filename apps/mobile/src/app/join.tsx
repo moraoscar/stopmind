@@ -37,17 +37,21 @@ export default function JoinScreen() {
     setPlayerName,
     serverUrl,
     connectionStatus,
+    roomMode,
+    onlineAvailable,
     room,
     playerId,
     errorMessage,
     clearError,
     joinLanRoom,
+    joinOnlineRoom,
     leaveGame,
   } = useGame();
 
   const [mode, setMode] = useState<'qr' | 'manual'>(
     params.room ? 'manual' : 'qr'
   );
+  const [joinChannel, setJoinChannel] = useState<'lan' | 'online'>('lan');
   const [roomCodeInput, setRoomCodeInput] = useState(
     typeof params.room === 'string' ? params.room.toUpperCase() : ''
   );
@@ -137,6 +141,15 @@ export default function JoinScreen() {
       return;
     }
 
+    if (joinChannel === 'online') {
+      if (joiningRef.current) return;
+      joiningRef.current = true;
+      void joinOnlineRoom(cleanCode).finally(() => {
+        joiningRef.current = false;
+      });
+      return;
+    }
+
     // Auto-resolve host phone IP from WiFi Bonjour discovery so manual code works WITHOUT scanning QR first!
     const matchedDiscovered = discoveredRooms.find(
       (r) => r.roomCode.toUpperCase() === cleanCode
@@ -161,7 +174,9 @@ export default function JoinScreen() {
           <Text style={styles.headerTitle}>Sala {room.roomCode}</Text>
           <View style={styles.connectedBadge}>
             <View style={styles.onlineDot} />
-            <Text style={styles.connectedText}>WiFi</Text>
+            <Text style={styles.connectedText}>
+              {roomMode === 'online' ? 'Online' : 'WiFi'}
+            </Text>
           </View>
         </View>
 
@@ -398,6 +413,60 @@ export default function JoinScreen() {
             </View>
           ) : (
             <View style={styles.card}>
+              <View style={styles.channelRow}>
+                <Pressable
+                  onPress={() => {
+                    setJoinChannel('lan');
+                    setLocalError(null);
+                    clearError();
+                  }}
+                  style={[
+                    styles.channelBtn,
+                    joinChannel === 'lan' && styles.channelBtnActive,
+                  ]}
+                >
+                  <Ionicons
+                    name="wifi"
+                    size={15}
+                    color={joinChannel === 'lan' ? COLORS.white : COLORS.ink}
+                  />
+                  <Text
+                    style={[
+                      styles.channelBtnText,
+                      joinChannel === 'lan' && styles.channelBtnTextActive,
+                    ]}
+                  >
+                    Wi-Fi local
+                  </Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={() => {
+                    setJoinChannel('online');
+                    setLocalError(null);
+                    clearError();
+                  }}
+                  style={[
+                    styles.channelBtn,
+                    joinChannel === 'online' && styles.channelBtnActive,
+                  ]}
+                >
+                  <Ionicons
+                    name="globe-outline"
+                    size={15}
+                    color={joinChannel === 'online' ? COLORS.white : COLORS.ink}
+                  />
+                  <Text
+                    style={[
+                      styles.channelBtnText,
+                      joinChannel === 'online' && styles.channelBtnTextActive,
+                    ]}
+                  >
+                    Sala Online
+                  </Text>
+                </Pressable>
+              </View>
+
               <Text style={styles.label}>Código de sala</Text>
               <TextInput
                 style={[styles.input, styles.codeInput]}
@@ -419,36 +488,61 @@ export default function JoinScreen() {
                 ]}
               >
                 {connectionStatus === 'connecting' ? (
-                  <ActivityIndicator color="#FFFFFF" />
+                  <ActivityIndicator color={COLORS.white} />
                 ) : (
-                  <Text style={styles.joinSubmitText}>UNIRSE A LA SALA</Text>
+                  <Text style={styles.joinSubmitText}>
+                    {joinChannel === 'online'
+                      ? 'UNIRSE ONLINE'
+                      : 'UNIRSE A LA SALA'}
+                  </Text>
                 )}
               </Pressable>
 
-              <Pressable
-                onPress={() => setShowServerField((v) => !v)}
-                style={styles.advancedToggle}
-              >
-                <Ionicons name="wifi-outline" size={14} color={COLORS.inkMuted} />
-                <Text style={styles.advancedToggleText}>
-                  {showServerField
-                    ? 'Ocultar IP manual del anfitrión'
-                    : discoveredRooms.length > 0
-                      ? 'IP detectada automáticamente por WiFi'
-                      : 'Ingresar IP del anfitrión manualmente (opcional)'}
-                </Text>
-              </Pressable>
+              {joinChannel === 'online' ? (
+                <View style={styles.advancedToggle}>
+                  <Ionicons
+                    name="globe-outline"
+                    size={14}
+                    color={onlineAvailable ? COLORS.emerald : COLORS.inkMuted}
+                  />
+                  <Text style={styles.advancedToggleText}>
+                    {onlineAvailable
+                      ? 'Conecta por internet con el código de 4 letras'
+                      : 'Configura EXPO_PUBLIC_ONLINE_WS_URL para salas online'}
+                  </Text>
+                </View>
+              ) : (
+                <>
+                  <Pressable
+                    onPress={() => setShowServerField((v) => !v)}
+                    style={styles.advancedToggle}
+                  >
+                    <Ionicons
+                      name="wifi-outline"
+                      size={14}
+                      color={COLORS.inkMuted}
+                    />
+                    <Text style={styles.advancedToggleText}>
+                      {showServerField
+                        ? 'Ocultar IP manual del anfitrión'
+                        : discoveredRooms.length > 0
+                          ? 'IP detectada automáticamente por WiFi'
+                          : 'Ingresar IP del anfitrión manualmente (opcional)'}
+                    </Text>
+                  </Pressable>
 
-              {showServerField && (
-                <TextInput
-                  style={styles.input}
-                  value={wsInput}
-                  onChangeText={setWsInput}
-                  placeholder="ws://192.168.1.10:3001"
-                  placeholderTextColor={COLORS.slate}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                />
+                  {showServerField && (
+                    <TextInput
+                      style={styles.input}
+                      value={wsInput}
+                      onChangeText={setWsInput}
+                      placeholder="ws://192.168.1.10:3001"
+                      placeholderTextColor={COLORS.slate}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                    />
+                  )}
+                </>
               )}
             </View>
           )}
@@ -571,6 +665,35 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.md,
     fontWeight: FONT_WEIGHTS.bold,
     color: COLORS.inkMuted,
+  },
+  channelRow: {
+    flexDirection: 'row',
+    backgroundColor: COLORS.bg,
+    borderRadius: RADII.lg,
+    padding: SPACING.xxs,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    gap: SPACING.xxs,
+  },
+  channelBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.xs,
+    paddingVertical: SPACING.sm + 1,
+    borderRadius: RADII.sm,
+  },
+  channelBtnActive: {
+    backgroundColor: COLORS.indigo,
+  },
+  channelBtnText: {
+    fontSize: FONT_SIZES.md,
+    fontWeight: FONT_WEIGHTS.extrabold,
+    color: COLORS.ink,
+  },
+  channelBtnTextActive: {
+    color: COLORS.white,
   },
   input: {
     backgroundColor: COLORS.bg,

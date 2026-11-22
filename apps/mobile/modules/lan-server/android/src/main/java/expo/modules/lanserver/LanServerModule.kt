@@ -3,6 +3,7 @@ package expo.modules.lanserver
 import android.content.Context
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
+import android.net.wifi.WifiManager
 import android.util.Base64
 import androidx.core.os.bundleOf
 import expo.modules.kotlin.Promise
@@ -74,10 +75,36 @@ class LanServerModule : Module() {
 
   private var registrationListener: NsdManager.RegistrationListener? = null
   private var discoveryListener: NsdManager.DiscoveryListener? = null
+  private var multicastLock: WifiManager.MulticastLock? = null
   private val discoveredRooms = ConcurrentHashMap<String, Map<String, Any>>()
 
   private val nsdManager: NsdManager?
     get() = appContext.reactContext?.getSystemService(Context.NSD_SERVICE) as? NsdManager
+
+  private val wifiManager: WifiManager?
+    get() = appContext.reactContext?.applicationContext?.getSystemService(Context.WIFI_SERVICE) as? WifiManager
+
+  private fun acquireMulticastLock() {
+    try {
+      if (multicastLock?.isHeld == true) return
+      val lock = wifiManager?.createMulticastLock("stopmind-nsd-lock") ?: return
+      lock.setReferenceCounted(false)
+      lock.acquire()
+      multicastLock = lock
+    } catch (_: Exception) {
+    }
+  }
+
+  private fun releaseMulticastLockIfIdle() {
+    if (registrationListener != null || discoveryListener != null) return
+    try {
+      if (multicastLock?.isHeld == true) {
+        multicastLock?.release()
+      }
+    } catch (_: Exception) {
+    }
+    multicastLock = null
+  }
 
   override fun definition() = ModuleDefinition {
     Name("LanServer")
@@ -164,6 +191,7 @@ class LanServerModule : Module() {
     if (roomCode.isEmpty()) return
     val manager = nsdManager ?: return
     unregisterNsdService()
+    acquireMulticastLock()
 
     try {
       val info = NsdServiceInfo().apply {
@@ -194,6 +222,7 @@ class LanServerModule : Module() {
       nsdManager?.unregisterService(listener)
     } catch (_: Exception) {
     }
+    releaseMulticastLockIfIdle()
   }
 
   private fun emitDiscoveredRooms() {
@@ -206,6 +235,7 @@ class LanServerModule : Module() {
     stopDiscoveryInternal()
     val manager = nsdManager ?: return
     discoveredRooms.clear()
+    acquireMulticastLock()
 
     val listener = object : NsdManager.DiscoveryListener {
       override fun onDiscoveryStarted(regType: String) {}
@@ -270,6 +300,7 @@ class LanServerModule : Module() {
     } catch (_: Exception) {
     }
     discoveredRooms.clear()
+    releaseMulticastLockIfIdle()
   }
 
   private fun stopServerInternal() {

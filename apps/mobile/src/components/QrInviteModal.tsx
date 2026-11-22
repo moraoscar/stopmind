@@ -3,6 +3,7 @@ import {
   Modal,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   View,
@@ -29,6 +30,7 @@ interface QrInviteModalProps {
   roomCode: string | null;
   wsUrl: string;
   players: PlayerInfo[];
+  isOnline?: boolean;
 }
 
 export function QrInviteModal({
@@ -38,7 +40,16 @@ export function QrInviteModal({
   roomCode,
   wsUrl,
   players,
+  isOnline = false,
 }: QrInviteModalProps) {
+  const handleShareInvite = () => {
+    if (!roomCode) return;
+    const message = isOnline
+      ? `¡Únete a mi partida online de STOPMind! Código de sala: ${roomCode}${qrPayload ? `\nEnlace: ${qrPayload}` : ''}`
+      : `¡Únete a mi partida WiFi de STOPMind! Código de sala: ${roomCode}`;
+    void Share.share({ message });
+  };
+
   return (
     <Modal
       visible={visible}
@@ -51,12 +62,22 @@ export function QrInviteModal({
           <View style={styles.header}>
             <View style={styles.titleRow}>
               <View style={styles.iconCircle}>
-                <Ionicons name="qr-code" size={20} color={COLORS.indigo} />
+                <Ionicons
+                  name={isOnline ? 'globe-outline' : 'qr-code'}
+                  size={20}
+                  color={COLORS.indigo}
+                />
               </View>
               <View>
-                <Text style={styles.title}>Invitar jugadores (WiFi)</Text>
+                <Text style={styles.title}>
+                  {isOnline
+                    ? 'Invitar jugadores (Online)'
+                    : 'Invitar jugadores (WiFi)'}
+                </Text>
                 <Text style={styles.subtitle}>
-                  Misma red WiFi · Sin internet
+                  {isOnline
+                    ? 'Juega desde cualquier lugar · Internet'
+                    : 'Misma red WiFi · Sin internet'}
                 </Text>
               </View>
             </View>
@@ -102,6 +123,19 @@ export function QrInviteModal({
                     ))}
                   </View>
                   <Text style={styles.wsText}>{wsUrl}</Text>
+                  <Pressable
+                    onPress={handleShareInvite}
+                    style={styles.shareBtn}
+                  >
+                    <Ionicons
+                      name="share-social-outline"
+                      size={16}
+                      color={COLORS.indigo}
+                    />
+                    <Text style={styles.shareBtnText}>
+                      Compartir código de sala
+                    </Text>
+                  </Pressable>
                 </View>
 
                 <View style={styles.playersBox}>
@@ -271,6 +305,21 @@ const styles = StyleSheet.create({
     color: COLORS.inkMuted,
     fontFamily: FONTS.mono,
     marginTop: 2,
+  },
+  shareBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    backgroundColor: COLORS.indigoSoft,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.sm,
+    borderRadius: RADII.pill,
+    marginTop: SPACING.xxs,
+  },
+  shareBtnText: {
+    fontSize: FONT_SIZES.md,
+    fontWeight: FONT_WEIGHTS.extrabold,
+    color: COLORS.indigo,
   },
   playersBox: {
     width: '100%',

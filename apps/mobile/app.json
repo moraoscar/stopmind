@@ -31,7 +31,10 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "permissions": [
-        "CAMERA"
+        "CAMERA",
+        "ACCESS_WIFI_STATE",
+        "CHANGE_WIFI_MULTICAST_STATE",
+        "ACCESS_NETWORK_STATE"
       ],
       "predictiveBackGestureEnabled": false
     },
@@ -40,6 +43,7 @@
       "bundler": "metro"
     },
     "plugins": [
+      "./plugins/withAndroidLanNetwork",
       "expo-router",
       [
         "expo-camera",

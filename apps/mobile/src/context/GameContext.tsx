@@ -27,9 +27,15 @@ import { validateRoundViaBackend } from '../utils/apiValidator';
 import { getWordHint } from '../utils/hintProvider';
 import {
   buildJoinQrPayload,
+  buildOnlineRoomWsUrl,
+  generateRandomRoomCode,
   getDefaultLanServerUrl,
+  getOnlineRealtimeBaseUrl,
+  isOnlineWsUrl,
   normalizeServerUrl,
 } from '../utils/network';
+
+export type RoomMode = 'lan' | 'online';
 
 interface StopBanner {
   reason: 'stop' | 'timeout';
@@ -42,6 +48,8 @@ interface GameContextValue {
   serverUrl: string;
   setServerUrl: (url: string) => void;
   connectionStatus: ConnectionStatus;
+  roomMode: RoomMode;
+  onlineAvailable: boolean;
   isPhoneHost: boolean;
   errorMessage: string | null;
   clearError: () => void;
@@ -68,8 +76,13 @@ interface GameContextValue {
   roundResults: RoundResults | null;
 
   createLanRoom: (overrideUrl?: string) => Promise<boolean>;
+  createOnlineRoom: () => Promise<boolean>;
   joinLanRoom: (
     wsUrl: string,
+    roomCode: string,
+    nameOverride?: string
+  ) => Promise<boolean>;
+  joinOnlineRoom: (
     roomCode: string,
     nameOverride?: string
   ) => Promise<boolean>;
@@ -111,7 +124,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   );
   const [connectionStatus, setConnectionStatus] =
     useState<ConnectionStatus>('disconnected');
+  const [roomMode, setRoomMode] = useState<RoomMode>('lan');
   const [isPhoneHost, setIsPhoneHost] = useState(false);
+  const onlineBaseUrl = getOnlineRealtimeBaseUrl();
+  const onlineAvailable = onlineBaseUrl.length > 0;
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const [config, setConfig] = useState<GameConfig>(DEFAULT_CONFIG);
@@ -244,6 +260,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         closeSocket();
         stopEmbeddedHost();
         const url = normalizeServerUrl(rawUrl);
+        const onlineAttempt = isOnlineWsUrl(url);
+        setRoomMode(onlineAttempt ? 'online' : 'lan');
         setServerUrlState(url);
         setConnectionStatus('connecting');
         setErrorMessage(null);
@@ -282,7 +300,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
             } else {
               setConnectionStatus('disconnected');
               setErrorMessage(
-                'No se pudo conectar con el teléfono anfitrión. Verifica que ambos estén en el mismo WiFi y acepta el permiso de Red Local.'
+                onlineAttempt
+                  ? 'No se pudo conectar al servidor online. Verifica tu conexión a internet e intenta de nuevo.'
+                  : 'No se pudo conectar con el teléfono anfitrión. Verifica que ambos estén en el mismo WiFi y acepta el permiso de Red Local.'
               );
             }
             resolve(false);
@@ -453,7 +473,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
             } else {
               setConnectionStatus('disconnected');
               setErrorMessage(
-                'No se encontró la partida en esa dirección WiFi.'
+                onlineAttempt
+                  ? 'No se pudo conectar con la sala online. Revisa el código o tu conexión a internet.'
+                  : 'No se encontró la partida en esa dirección WiFi.'
               );
             }
             resolve(false);
@@ -556,6 +578,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
             serverInfo,
           } = await engine.start(DEFAULT_SERVER_PORT);
           embeddedHostRef.current = engine;
+          setRoomMode('lan');
           setIsPhoneHost(true);
           setPlayerId(hostPlayerId);
           setRoom(snapshot);
@@ -583,6 +606,31 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     [closeSocket, openAndHandshake, serverUrl, stopEmbeddedHost]
   );
 
+  const createOnlineRoom = useCallback(async (): Promise<boolean> => {
+    const base = getOnlineRealtimeBaseUrl();
+    if (!base) {
+      setErrorMessage(
+        'Modo Online aún no configurado. Despliega apps/realtime en Cloudflare Workers y agrega EXPO_PUBLIC_ONLINE_WS_URL.'
+      );
+      return false;
+    }
+
+    const safeName = playerNameRef.current.trim() || 'Anfitrión';
+    const roomCode = generateRandomRoomCode(4);
+    const roomWsUrl = buildOnlineRoomWsUrl(roomCode, base);
+
+    return openAndHandshake(
+      roomWsUrl,
+      {
+        type: 'create_room',
+        roomCode,
+        playerName: safeName,
+        config: configRef.current,
+      },
+      false
+    );
+  }, [openAndHandshake]);
+
   const joinLanRoom = useCallback(
     async (
       wsUrl: string,
@@ -605,6 +653,26 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       );
     },
     [openAndHandshake]
+  );
+
+  const joinOnlineRoom = useCallback(
+    async (roomCode: string, nameOverride?: string): Promise<boolean> => {
+      const base = getOnlineRealtimeBaseUrl();
+      if (!base) {
+        setErrorMessage(
+          'Modo Online no disponible en esta compilación. Usa WiFi local o configura EXPO_PUBLIC_ONLINE_WS_URL.'
+        );
+        return false;
+      }
+      const cleanCode = roomCode.trim().toUpperCase();
+      if (!cleanCode) {
+        setErrorMessage('Ingresa el código de 4 caracteres de la sala.');
+        return false;
+      }
+      const roomWsUrl = buildOnlineRoomWsUrl(cleanCode, base);
+      return joinLanRoom(roomWsUrl, cleanCode, nameOverride);
+    },
+    [joinLanRoom]
   );
 
   const updateConfig = useCallback(
@@ -958,11 +1026,15 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   }, [isPhoneHost, connectionStatus, room, playerId]);
 
   const effectiveWsUrl = useMemo(() => {
+    if (roomMode === 'online' && room?.roomCode) {
+      const onlineUrl = buildOnlineRoomWsUrl(room.roomCode);
+      if (onlineUrl) return onlineUrl;
+    }
     if (room && room.serverIps.length > 0) {
       return `ws://${room.serverIps[0]}:${room.serverPort}`;
     }
     return normalizeServerUrl(serverUrl);
-  }, [room, serverUrl]);
+  }, [room, roomMode, serverUrl]);
 
   const qrPayload = useMemo(() => {
     if (!room?.roomCode) return null;
@@ -978,6 +1050,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       serverUrl,
       setServerUrl,
       connectionStatus,
+      roomMode,
+      onlineAvailable,
       isPhoneHost,
       errorMessage,
       clearError,
@@ -998,7 +1072,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       hintsUsed,
       roundResults,
       createLanRoom,
+      createOnlineRoom,
       joinLanRoom,
+      joinOnlineRoom,
       startGame,
       setAnswer,
       requestHint,
@@ -1014,6 +1090,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       serverUrl,
       setServerUrl,
       connectionStatus,
+      roomMode,
+      onlineAvailable,
       isPhoneHost,
       errorMessage,
       clearError,
@@ -1034,7 +1112,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       hintsUsed,
       roundResults,
       createLanRoom,
+      createOnlineRoom,
       joinLanRoom,
+      joinOnlineRoom,
       startGame,
       setAnswer,
       requestHint,
