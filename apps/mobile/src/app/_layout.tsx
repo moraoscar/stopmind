@@ -5,7 +5,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AnimatedSplash } from '../components/AnimatedSplash';
-import { COLORS } from '../constants/game';
+import { COLORS } from '../theme/tokens';
 import { GameProvider } from '../context/GameContext';
 import { parseJoinQrPayload } from '../utils/network';
 

@@ -13,6 +13,17 @@ import * as Haptics from 'expo-haptics';
 import * as SplashScreen from 'expo-splash-screen';
 import LottieView from 'lottie-react-native';
 import STOP_HAND_LOTTIE from '../../assets/lottie/stop-hand.json';
+import {
+  COLORS,
+  FONT_SIZES,
+  FONT_WEIGHTS,
+  LETTER_SPACING,
+  RADII,
+  SHADOWS,
+  SPACING,
+} from '../theme/tokens';
+
+const A = COLORS.accents;
 
 interface FloatingItem {
   id: string;
@@ -30,32 +41,32 @@ interface FloatingItem {
 // Stage 1: Categories appear first; Stage 2: Spanish words cascade to fill the screen
 const FLOATING_ITEMS: FloatingItem[] = [
   // Categories (0 - 650ms)
-  { id: 'c1', text: 'NOMBRE', isCategory: true, topPct: 10, leftPct: 8, rotateDeg: -9, color: '#0F172A', bg: '#FACC15', fontSize: 15, delayMs: 80 },
-  { id: 'c2', text: 'ANIMAL', isCategory: true, topPct: 14, leftPct: 58, rotateDeg: 8, color: '#0F172A', bg: '#22D3EE', fontSize: 15, delayMs: 170 },
-  { id: 'c3', text: 'FRUTA', isCategory: true, topPct: 27, leftPct: 64, rotateDeg: -7, color: '#FFFFFF', bg: '#F97316', fontSize: 15, delayMs: 260 },
-  { id: 'c4', text: 'COSA', isCategory: true, topPct: 29, leftPct: 7, rotateDeg: 6, color: '#0F172A', bg: '#FFFFFF', fontSize: 15, delayMs: 350 },
-  { id: 'c5', text: 'COLOR', isCategory: true, topPct: 71, leftPct: 9, rotateDeg: -8, color: '#0F172A', bg: '#2DD4BF', fontSize: 15, delayMs: 440 },
-  { id: 'c6', text: 'LUGAR', isCategory: true, topPct: 74, leftPct: 60, rotateDeg: 9, color: '#FFFFFF', bg: '#EC4899', fontSize: 15, delayMs: 530 },
-  { id: 'c7', text: 'PAÍS', isCategory: true, topPct: 84, leftPct: 36, rotateDeg: -4, color: '#0F172A', bg: '#34D399', fontSize: 15, delayMs: 620 },
+  { id: 'c1', text: 'NOMBRE', isCategory: true, topPct: 10, leftPct: 8, rotateDeg: -9, color: A.darkInk, bg: A.yellow, fontSize: FONT_SIZES.body, delayMs: 80 },
+  { id: 'c2', text: 'ANIMAL', isCategory: true, topPct: 14, leftPct: 58, rotateDeg: 8, color: A.darkInk, bg: A.cyan, fontSize: FONT_SIZES.body, delayMs: 170 },
+  { id: 'c3', text: 'FRUTA', isCategory: true, topPct: 27, leftPct: 64, rotateDeg: -7, color: COLORS.white, bg: A.orange, fontSize: FONT_SIZES.body, delayMs: 260 },
+  { id: 'c4', text: 'COSA', isCategory: true, topPct: 29, leftPct: 7, rotateDeg: 6, color: A.darkInk, bg: COLORS.white, fontSize: FONT_SIZES.body, delayMs: 350 },
+  { id: 'c5', text: 'COLOR', isCategory: true, topPct: 71, leftPct: 9, rotateDeg: -8, color: A.darkInk, bg: A.teal, fontSize: FONT_SIZES.body, delayMs: 440 },
+  { id: 'c6', text: 'LUGAR', isCategory: true, topPct: 74, leftPct: 60, rotateDeg: 9, color: COLORS.white, bg: A.pink, fontSize: FONT_SIZES.body, delayMs: 530 },
+  { id: 'c7', text: 'PAÍS', isCategory: true, topPct: 84, leftPct: 36, rotateDeg: -4, color: A.darkInk, bg: A.green, fontSize: FONT_SIZES.body, delayMs: 620 },
 
   // Words filling the screen rapidly (720 - 1850ms)
-  { id: 'w1', text: 'María', isCategory: false, topPct: 18, leftPct: 24, rotateDeg: -5, color: '#FEF08A', fontSize: 24, delayMs: 740 },
-  { id: 'w2', text: 'León', isCategory: false, topPct: 21, leftPct: 62, rotateDeg: 7, color: '#A5F3FC', fontSize: 25, delayMs: 830 },
-  { id: 'w3', text: 'Manzana', isCategory: false, topPct: 36, leftPct: 46, rotateDeg: -6, color: '#FED7AA', fontSize: 26, delayMs: 920 },
-  { id: 'w4', text: 'Guitarra', isCategory: false, topPct: 38, leftPct: 8, rotateDeg: 5, color: '#E2E8F0', fontSize: 22, delayMs: 1010 },
-  { id: 'w5', text: 'Madrid', isCategory: false, topPct: 47, leftPct: 58, rotateDeg: 8, color: '#FBCFE8', fontSize: 25, delayMs: 1090 },
-  { id: 'w6', text: 'Turquesa', isCategory: false, topPct: 48, leftPct: 12, rotateDeg: -8, color: '#99F6E4', fontSize: 23, delayMs: 1170 },
-  { id: 'w7', text: 'Águila', isCategory: false, topPct: 56, leftPct: 38, rotateDeg: 4, color: '#67E8F9', fontSize: 26, delayMs: 1250 },
-  { id: 'w8', text: 'Perú', isCategory: false, topPct: 60, leftPct: 72, rotateDeg: -7, color: '#6EE7B7', fontSize: 24, delayMs: 1320 },
-  { id: 'w9', text: 'Sofía', isCategory: false, topPct: 61, leftPct: 8, rotateDeg: 6, color: '#FDE047', fontSize: 24, delayMs: 1390 },
-  { id: 'w10', text: 'Fresa', isCategory: false, topPct: 42, leftPct: 34, rotateDeg: -4, color: '#FDBA74', fontSize: 22, delayMs: 1460 },
-  { id: 'w11', text: 'Reloj', isCategory: false, topPct: 66, leftPct: 42, rotateDeg: 7, color: '#F8FAFC', fontSize: 22, delayMs: 1530 },
-  { id: 'w12', text: 'Brasil', isCategory: false, topPct: 79, leftPct: 16, rotateDeg: -6, color: '#A7F3D0', fontSize: 23, delayMs: 1600 },
-  { id: 'w13', text: 'Morado', isCategory: false, topPct: 81, leftPct: 62, rotateDeg: 5, color: '#C4B5FD', fontSize: 22, delayMs: 1670 },
-  { id: 'w14', text: 'Mateo', isCategory: false, topPct: 7, leftPct: 40, rotateDeg: 3, color: '#FEF08A', fontSize: 20, delayMs: 1740 },
-  { id: 'w15', text: 'Tigre', isCategory: false, topPct: 52, leftPct: 24, rotateDeg: -9, color: '#BAE6FD', fontSize: 22, delayMs: 1800 },
-  { id: 'w16', text: 'Mango', isCategory: false, topPct: 89, leftPct: 14, rotateDeg: 4, color: '#FDBA74', fontSize: 21, delayMs: 1860 },
-  { id: 'w17', text: 'Roma', isCategory: false, topPct: 89, leftPct: 66, rotateDeg: -5, color: '#F9A8D4', fontSize: 22, delayMs: 1920 },
+  { id: 'w1', text: 'María', isCategory: false, topPct: 18, leftPct: 24, rotateDeg: -5, color: A.yellowSoft, fontSize: FONT_SIZES.h2, delayMs: 740 },
+  { id: 'w2', text: 'León', isCategory: false, topPct: 21, leftPct: 62, rotateDeg: 7, color: A.cyanSoft, fontSize: FONT_SIZES.h2, delayMs: 830 },
+  { id: 'w3', text: 'Manzana', isCategory: false, topPct: 36, leftPct: 46, rotateDeg: -6, color: A.orangeSoft, fontSize: FONT_SIZES.h1, delayMs: 920 },
+  { id: 'w4', text: 'Guitarra', isCategory: false, topPct: 38, leftPct: 8, rotateDeg: 5, color: A.lightSlate, fontSize: FONT_SIZES.h3, delayMs: 1010 },
+  { id: 'w5', text: 'Madrid', isCategory: false, topPct: 47, leftPct: 58, rotateDeg: 8, color: A.pinkSoft, fontSize: FONT_SIZES.h2, delayMs: 1090 },
+  { id: 'w6', text: 'Turquesa', isCategory: false, topPct: 48, leftPct: 12, rotateDeg: -8, color: A.cyanSoft, fontSize: FONT_SIZES.h3, delayMs: 1170 },
+  { id: 'w7', text: 'Águila', isCategory: false, topPct: 56, leftPct: 38, rotateDeg: 4, color: A.cyan, fontSize: FONT_SIZES.h1, delayMs: 1250 },
+  { id: 'w8', text: 'Perú', isCategory: false, topPct: 60, leftPct: 72, rotateDeg: -7, color: A.green, fontSize: FONT_SIZES.h2, delayMs: 1320 },
+  { id: 'w9', text: 'Sofía', isCategory: false, topPct: 61, leftPct: 8, rotateDeg: 6, color: COLORS.trophyGold, fontSize: FONT_SIZES.h2, delayMs: 1390 },
+  { id: 'w10', text: 'Fresa', isCategory: false, topPct: 42, leftPct: 34, rotateDeg: -4, color: A.orangeSoft, fontSize: FONT_SIZES.h3, delayMs: 1460 },
+  { id: 'w11', text: 'Reloj', isCategory: false, topPct: 66, leftPct: 42, rotateDeg: 7, color: COLORS.white, fontSize: FONT_SIZES.h3, delayMs: 1530 },
+  { id: 'w12', text: 'Brasil', isCategory: false, topPct: 79, leftPct: 16, rotateDeg: -6, color: COLORS.mintHighlight, fontSize: FONT_SIZES.h3, delayMs: 1600 },
+  { id: 'w13', text: 'Morado', isCategory: false, topPct: 81, leftPct: 62, rotateDeg: 5, color: A.purpleSoft, fontSize: FONT_SIZES.h3, delayMs: 1670 },
+  { id: 'w14', text: 'Mateo', isCategory: false, topPct: 7, leftPct: 40, rotateDeg: 3, color: A.yellowSoft, fontSize: FONT_SIZES.xxl, delayMs: 1740 },
+  { id: 'w15', text: 'Tigre', isCategory: false, topPct: 52, leftPct: 24, rotateDeg: -9, color: A.cyanSoft, fontSize: FONT_SIZES.h3, delayMs: 1800 },
+  { id: 'w16', text: 'Mango', isCategory: false, topPct: 89, leftPct: 14, rotateDeg: 4, color: A.orangeSoft, fontSize: FONT_SIZES.h3, delayMs: 1860 },
+  { id: 'w17', text: 'Roma', isCategory: false, topPct: 89, leftPct: 66, rotateDeg: -5, color: A.pinkSoft, fontSize: FONT_SIZES.h3, delayMs: 1920 },
 ];
 
 interface AnimatedSplashProps {
@@ -305,7 +316,7 @@ export function AnimatedSplash({ onFinish }: AnimatedSplashProps) {
 const styles = StyleSheet.create({
   root: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: '#001C55',
+    backgroundColor: COLORS.navy,
     zIndex: 999,
     elevation: 999,
   },
@@ -313,29 +324,25 @@ const styles = StyleSheet.create({
     position: 'absolute',
   },
   categoryPill: {
-    paddingHorizontal: 13,
-    paddingVertical: 6,
-    borderRadius: 999,
-    shadowColor: '#000',
-    shadowOpacity: 0.28,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 4,
+    paddingHorizontal: SPACING.lg - 1,
+    paddingVertical: SPACING.xs,
+    borderRadius: RADII.pill,
+    ...SHADOWS.md,
   },
   categoryText: {
-    fontWeight: '900',
-    letterSpacing: 1.1,
+    fontWeight: FONT_WEIGHTS.black,
+    letterSpacing: LETTER_SPACING.wide,
   },
   wordText: {
-    fontWeight: '900',
-    letterSpacing: 0.4,
+    fontWeight: FONT_WEIGHTS.black,
+    letterSpacing: LETTER_SPACING.tight,
     textShadowColor: 'rgba(0, 10, 35, 0.75)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 6,
   },
   blurNavyTint: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(0, 22, 68, 0.42)',
+    backgroundColor: COLORS.navyBlurTint,
   },
   centerStage: {
     ...StyleSheet.absoluteFill,
@@ -359,30 +366,26 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   stopBadge: {
-    backgroundColor: '#EF4444',
-    paddingHorizontal: 22,
-    paddingVertical: 7,
-    borderRadius: 16,
+    backgroundColor: COLORS.stopRed,
+    paddingHorizontal: SPACING.xxl + 2,
+    paddingVertical: SPACING.xs + 1,
+    borderRadius: RADII.xl,
     borderWidth: 3,
-    borderColor: '#FFFFFF',
-    shadowColor: '#991B1B',
-    shadowOpacity: 0.55,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 8,
+    borderColor: COLORS.white,
+    ...SHADOWS.splashStopBadge,
   },
   stopWord: {
-    color: '#FFFFFF',
-    fontSize: 34,
-    fontWeight: '900',
-    letterSpacing: 3,
+    color: COLORS.white,
+    fontSize: FONT_SIZES.giant,
+    fontWeight: FONT_WEIGHTS.black,
+    letterSpacing: LETTER_SPACING.logo,
   },
   brandTitle: {
-    marginTop: 4,
-    color: '#FFFFFF',
-    fontSize: 24,
-    fontWeight: '900',
-    letterSpacing: 2,
+    marginTop: SPACING.xxs,
+    color: COLORS.white,
+    fontSize: FONT_SIZES.h2,
+    fontWeight: FONT_WEIGHTS.black,
+    letterSpacing: LETTER_SPACING.brand,
     textShadowColor: 'rgba(0, 0, 0, 0.45)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 6,

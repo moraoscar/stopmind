@@ -16,8 +16,17 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BlurredWordsBackdrop } from '../components/BlurredWordsBackdrop';
-import { COLORS } from '../constants/game';
 import { useGame } from '../context/GameContext';
+import {
+  COLORS,
+  FONT_SIZES,
+  FONT_WEIGHTS,
+  LETTER_SPACING,
+  RADII,
+  SHADOWS,
+  SIZES,
+  SPACING,
+} from '../theme/tokens';
 
 export default function HomeScreen() {
   const { playerName, setPlayerName } = useGame();
@@ -59,9 +68,12 @@ export default function HomeScreen() {
     };
   }, [playScale]);
 
-  const baseOuterSize = isCompactScreen ? 216 : 244;
-  const baseMiddleSize = isCompactScreen ? 188 : 214;
-  const baseCircleSize = isCompactScreen ? 160 : 184;
+  const playDims = isCompactScreen
+    ? SIZES.homePlayButton.compact
+    : SIZES.homePlayButton.regular;
+  const baseOuterSize = playDims.outer;
+  const baseMiddleSize = playDims.middle;
+  const baseCircleSize = playDims.inner;
 
   // Shrink layout footprint while keyboard is open so JUGAR never collides with Join on iPhone 12 / SE
   const stageHeight = keyboardVisible ? 132 : baseOuterSize;
@@ -281,74 +293,66 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingVertical: 16,
+    paddingHorizontal: SPACING.xxxl,
+    paddingVertical: SPACING.xl,
     justifyContent: 'space-between',
   },
   containerKeyboard: {
-    paddingVertical: 8,
+    paddingVertical: SPACING.sm,
   },
   topSection: {
     alignItems: 'center',
-    gap: 10,
-    marginTop: 12,
+    gap: SPACING.md,
+    marginTop: SPACING.base,
   },
   topSectionCompact: {
-    gap: 8,
-    marginTop: 4,
+    gap: SPACING.sm,
+    marginTop: SPACING.xxs,
   },
   logoBadge: {
     backgroundColor: COLORS.ink,
-    paddingHorizontal: 22,
-    paddingVertical: 8,
-    borderRadius: 16,
+    paddingHorizontal: SPACING.xxl,
+    paddingVertical: SPACING.sm,
+    borderRadius: RADII.xl,
     transform: [{ rotate: '-2deg' }],
-    shadowColor: '#000',
-    shadowOpacity: 0.14,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
+    ...SHADOWS.md,
   },
   logoText: {
-    color: '#FFFFFF',
-    fontSize: 30,
-    fontWeight: '900',
-    letterSpacing: 3,
+    color: COLORS.white,
+    fontSize: FONT_SIZES.display,
+    fontWeight: FONT_WEIGHTS.black,
+    letterSpacing: LETTER_SPACING.logo,
   },
   logoTextCompact: {
-    fontSize: 24,
-    letterSpacing: 2.2,
+    fontSize: FONT_SIZES.h2,
+    letterSpacing: LETTER_SPACING.brand,
   },
   tagline: {
-    fontSize: 14,
+    fontSize: FONT_SIZES.base,
     color: COLORS.ink,
     opacity: 0.78,
     textAlign: 'center',
-    fontWeight: '600',
+    fontWeight: FONT_WEIGHTS.semibold,
   },
   nameCard: {
-    marginTop: 6,
+    marginTop: SPACING.xs,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.94)',
+    gap: SPACING.sm,
+    backgroundColor: COLORS.surfaceTranslucent,
     borderWidth: 1,
     borderColor: COLORS.border,
-    borderRadius: 999,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
+    borderRadius: RADII.pill,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md - 1,
     width: '78%',
     maxWidth: 280,
-    shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    ...SHADOWS.sm,
   },
   nameInput: {
     flex: 1,
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: FONT_SIZES.body,
+    fontWeight: FONT_WEIGHTS.bold,
     color: COLORS.ink,
     padding: 0,
   },
@@ -358,12 +362,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   outerRing: {
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    backgroundColor: COLORS.stopRedRingOuter,
     alignItems: 'center',
     justifyContent: 'center',
   },
   middleRing: {
-    backgroundColor: 'rgba(239, 68, 68, 0.18)',
+    backgroundColor: COLORS.stopRedRingMiddle,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -372,56 +376,48 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 5,
-    borderColor: '#FFFFFF',
-    shadowColor: COLORS.stopRedDark,
-    shadowOpacity: 0.4,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 10,
+    borderColor: COLORS.white,
+    ...SHADOWS.stopButton,
   },
   playCirclePressed: {
     transform: [{ scale: 0.94 }],
     backgroundColor: COLORS.stopRedDark,
   },
   playIcon: {
-    marginLeft: 4,
+    marginLeft: SPACING.xxs,
     marginBottom: 2,
   },
   playLabel: {
-    color: '#FFFFFF',
-    fontSize: 28,
-    fontWeight: '900',
-    letterSpacing: 2.5,
+    color: COLORS.white,
+    fontSize: FONT_SIZES.title,
+    fontWeight: FONT_WEIGHTS.black,
+    letterSpacing: LETTER_SPACING.play,
   },
   playLabelCompact: {
-    fontSize: 24,
+    fontSize: FONT_SIZES.h2,
   },
   bottomSection: {
-    gap: 14,
-    marginBottom: 6,
+    gap: SPACING.lg,
+    marginBottom: SPACING.xs,
   },
   bottomSectionCompact: {
     gap: 0,
-    marginBottom: 4,
+    marginBottom: SPACING.xxs,
   },
   joinButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.94)',
-    borderRadius: 20,
-    padding: 14,
+    gap: SPACING.base,
+    backgroundColor: COLORS.surfaceTranslucent,
+    borderRadius: RADII.xxl,
+    padding: SPACING.lg,
     borderWidth: 1,
     borderColor: COLORS.border,
-    shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 3,
+    ...SHADOWS.sm,
   },
   joinButtonCompact: {
-    paddingVertical: 11,
-    paddingHorizontal: 14,
+    paddingVertical: SPACING.base - 1,
+    paddingHorizontal: SPACING.lg,
   },
   joinButtonPressed: {
     backgroundColor: COLORS.surfaceAlt,
@@ -429,7 +425,7 @@ const styles = StyleSheet.create({
   joinIconWrap: {
     width: 42,
     height: 42,
-    borderRadius: 14,
+    borderRadius: RADII.lg,
     backgroundColor: COLORS.indigoSoft,
     alignItems: 'center',
     justifyContent: 'center',
@@ -438,12 +434,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   joinTitle: {
-    fontSize: 15,
-    fontWeight: '800',
+    fontSize: FONT_SIZES.body,
+    fontWeight: FONT_WEIGHTS.extrabold,
     color: COLORS.ink,
   },
   joinSub: {
-    fontSize: 12,
+    fontSize: FONT_SIZES.sm,
     color: COLORS.inkMuted,
     marginTop: 1,
   },
@@ -451,22 +447,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
+    gap: SPACING.xs,
   },
   lanBadgeText: {
-    fontSize: 12,
+    fontSize: FONT_SIZES.sm,
     color: COLORS.ink,
     opacity: 0.72,
-    fontWeight: '600',
+    fontWeight: FONT_WEIGHTS.semibold,
   },
   privacyLinkBtn: {
     alignItems: 'center',
     paddingVertical: 2,
   },
   privacyLinkText: {
-    fontSize: 12,
+    fontSize: FONT_SIZES.sm,
     color: COLORS.indigo,
-    fontWeight: '700',
+    fontWeight: FONT_WEIGHTS.bold,
     textDecorationLine: 'underline',
   },
 });
