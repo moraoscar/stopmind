@@ -10,6 +10,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.cxvone.stopmind",
+      "buildNumber": "2",
       "associatedDomains": [
         "applinks:stopmind.cxvone.com"
       ],
