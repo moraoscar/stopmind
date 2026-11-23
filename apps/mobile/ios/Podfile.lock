@@ -94,6 +94,8 @@ PODS:
     - ExpoModulesCore
   - ExpoStatusBar (58.0.5):
     - ExpoModulesCore
+  - ExpoStoreReview (58.0.3):
+    - ExpoModulesCore
   - fast_float (8.0.0):
     - ReactNativeDependencies
   - FBLazyVector (0.88.1):
@@ -2078,6 +2080,7 @@ DEPENDENCIES:
   - ExpoRouter (from `../../../node_modules/expo-router/ios`)
   - ExpoSplashScreen (from `../../../node_modules/expo-splash-screen/ios`)
   - ExpoStatusBar (from `../../../node_modules/expo-status-bar/ios`)
+  - ExpoStoreReview (from `../../../node_modules/expo-store-review/ios`)
   - fast_float (from `build/rndeps-facades/fast_float`)
   - FBLazyVector (from `build/rncore-facades/FBLazyVector`)
   - fmt (from `build/rndeps-facades/fmt`)
@@ -2219,6 +2222,8 @@ EXTERNAL SOURCES:
     :path: "../../../node_modules/expo-splash-screen/ios"
   ExpoStatusBar:
     :path: "../../../node_modules/expo-status-bar/ios"
+  ExpoStoreReview:
+    :path: "../../../node_modules/expo-store-review/ios"
   fast_float:
     :path: build/rndeps-facades/fast_float
   FBLazyVector:
@@ -2424,6 +2429,7 @@ SPEC CHECKSUMS:
   ExpoRouter: 01c92a99308a0ebb09fe41fddb2ecb180e78b52b
   ExpoSplashScreen: 5df81b55f086d8acc7a24008537514f5379aa6f9
   ExpoStatusBar: 38eff05a54229c9a388cb56cef29117b8dc77eb1
+  ExpoStoreReview: 70299dc7a36228eb985a8bbd3f65307a8a519c31
   fast_float: 7c925d1cebf8328d4018d061f49377e9f887e3b4
   FBLazyVector: 07cb4c5b92110c132f2bb73b908e87f35cbe0a19
   fmt: ba0886e864ebb21d14c98b2e12e164b8002f5b93

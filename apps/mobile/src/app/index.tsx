@@ -27,6 +27,7 @@ import {
   SIZES,
   SPACING,
 } from '../theme/tokens';
+import { promptStoreReviewManually } from '../utils/storeReview';
 
 export default function HomeScreen() {
   const { playerName, setPlayerName } = useGame();
@@ -257,19 +258,41 @@ export default function HomeScreen() {
                     </Text>
                   </View>
 
-                  <Pressable
-                    onPress={() =>
-                      void Linking.openURL(
-                        'https://stopmind.cxvone.com/app-privacy'
-                      )
-                    }
-                    hitSlop={8}
-                    style={styles.privacyLinkBtn}
-                  >
-                    <Text style={styles.privacyLinkText}>
-                      Política de Privacidad
-                    </Text>
-                  </Pressable>
+                  <View style={styles.footerLinksRow}>
+                    <Pressable
+                      onPress={() =>
+                        void Linking.openURL(
+                          'https://stopmind.cxvone.com/app-privacy'
+                        )
+                      }
+                      hitSlop={8}
+                      style={styles.privacyLinkBtn}
+                    >
+                      <Text style={styles.privacyLinkText}>
+                        Política de Privacidad
+                      </Text>
+                    </Pressable>
+
+                    {Platform.OS !== 'web' && (
+                      <>
+                        <Text style={styles.footerLinksDot}>·</Text>
+                        <Pressable
+                          onPress={() => void promptStoreReviewManually()}
+                          hitSlop={8}
+                          style={styles.rateLinkBtn}
+                        >
+                          <Ionicons
+                            name="star"
+                            size={12}
+                            color={COLORS.amber}
+                          />
+                          <Text style={styles.privacyLinkText}>
+                            Calificar app
+                          </Text>
+                        </Pressable>
+                      </>
+                    )}
+                  </View>
                 </>
               )}
             </View>
@@ -455,8 +478,25 @@ const styles = StyleSheet.create({
     opacity: 0.72,
     fontWeight: FONT_WEIGHTS.semibold,
   },
+  footerLinksRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+  },
+  footerLinksDot: {
+    fontSize: FONT_SIZES.sm,
+    color: COLORS.inkMuted,
+    fontWeight: FONT_WEIGHTS.bold,
+  },
   privacyLinkBtn: {
     alignItems: 'center',
+    paddingVertical: 2,
+  },
+  rateLinkBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xxs,
     paddingVertical: 2,
   },
   privacyLinkText: {

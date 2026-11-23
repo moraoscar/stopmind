@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   Pressable,
   ScrollView,
@@ -18,6 +18,7 @@ import {
   SPACING,
 } from '../theme/tokens';
 import { ScoreReason } from '../types/game';
+import { recordCompletedMatchAndMaybeRequestReview } from '../utils/storeReview';
 
 function getReasonLabel(
   reason: ScoreReason,
@@ -51,6 +52,18 @@ export default function ResultsScreen() {
     playAgain,
     leaveGame,
   } = useGame();
+
+  const reviewTriggeredRef = useRef(false);
+  const isFinalRound = Boolean(roundResults?.isFinalRound);
+
+  useEffect(() => {
+    if (!isFinalRound || reviewTriggeredRef.current) return;
+    reviewTriggeredRef.current = true;
+    const timer = setTimeout(() => {
+      void recordCompletedMatchAndMaybeRequestReview();
+    }, 1400);
+    return () => clearTimeout(timer);
+  }, [isFinalRound]);
 
   if (!roundResults) {
     return null;
