@@ -24,6 +24,13 @@ const REQUIRED_PERMISSIONS = [
   'android.permission.CHANGE_WIFI_MULTICAST_STATE',
 ];
 
+const OPTIONAL_FEATURES = [
+  'android.hardware.screen.portrait',
+  'android.hardware.wifi',
+  'android.hardware.camera',
+  'android.hardware.camera.autofocus',
+];
+
 function withAndroidLanNetwork(config) {
   config = withDangerousMod(config, [
     'android',
@@ -59,6 +66,26 @@ function withAndroidLanNetwork(config) {
       if (!existing.has(perm)) {
         manifest['uses-permission'].push({
           $: { 'android:name': perm },
+        });
+      }
+    }
+
+    if (!Array.isArray(manifest['uses-feature'])) {
+      manifest['uses-feature'] = [];
+    }
+
+    for (const featureName of OPTIONAL_FEATURES) {
+      const existingFeature = manifest['uses-feature'].find(
+        (f) => f?.$?.['android:name'] === featureName
+      );
+      if (existingFeature && existingFeature.$) {
+        existingFeature.$['android:required'] = 'false';
+      } else {
+        manifest['uses-feature'].push({
+          $: {
+            'android:name': featureName,
+            'android:required': 'false',
+          },
         });
       }
     }

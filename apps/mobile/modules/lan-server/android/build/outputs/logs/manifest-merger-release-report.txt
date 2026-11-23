@@ -1,16 +1,16 @@
 -- Merging decision tree log ---
 manifest
-ADDED from /Users/oscarmora/Documents/cxvone/stopgame/apps/mobile/modules/lan-server/android/build/intermediates/tmp/ProcessLibraryManifest/release/tempAndroidManifest1630873994483619175.xml:2:13-83
-INJECTED from /Users/oscarmora/Documents/cxvone/stopgame/apps/mobile/modules/lan-server/android/build/intermediates/tmp/ProcessLibraryManifest/release/tempAndroidManifest1630873994483619175.xml:2:13-83
+ADDED from /Users/oscarmora/Documents/cxvone/stopgame/apps/mobile/modules/lan-server/android/build/intermediates/tmp/ProcessLibraryManifest/release/tempAndroidManifest4496050079887107080.xml:2:13-83
+INJECTED from /Users/oscarmora/Documents/cxvone/stopgame/apps/mobile/modules/lan-server/android/build/intermediates/tmp/ProcessLibraryManifest/release/tempAndroidManifest4496050079887107080.xml:2:13-83
 	package
-		INJECTED from /Users/oscarmora/Documents/cxvone/stopgame/apps/mobile/modules/lan-server/android/build/intermediates/tmp/ProcessLibraryManifest/release/tempAndroidManifest1630873994483619175.xml
+		INJECTED from /Users/oscarmora/Documents/cxvone/stopgame/apps/mobile/modules/lan-server/android/build/intermediates/tmp/ProcessLibraryManifest/release/tempAndroidManifest4496050079887107080.xml
 	xmlns:android
-		ADDED from /Users/oscarmora/Documents/cxvone/stopgame/apps/mobile/modules/lan-server/android/build/intermediates/tmp/ProcessLibraryManifest/release/tempAndroidManifest1630873994483619175.xml:2:23-81
+		ADDED from /Users/oscarmora/Documents/cxvone/stopgame/apps/mobile/modules/lan-server/android/build/intermediates/tmp/ProcessLibraryManifest/release/tempAndroidManifest4496050079887107080.xml:2:23-81
 uses-sdk
-INJECTED from /Users/oscarmora/Documents/cxvone/stopgame/apps/mobile/modules/lan-server/android/build/intermediates/tmp/ProcessLibraryManifest/release/tempAndroidManifest1630873994483619175.xml reason: use-sdk injection requested
-INJECTED from /Users/oscarmora/Documents/cxvone/stopgame/apps/mobile/modules/lan-server/android/build/intermediates/tmp/ProcessLibraryManifest/release/tempAndroidManifest1630873994483619175.xml
-INJECTED from /Users/oscarmora/Documents/cxvone/stopgame/apps/mobile/modules/lan-server/android/build/intermediates/tmp/ProcessLibraryManifest/release/tempAndroidManifest1630873994483619175.xml
+INJECTED from /Users/oscarmora/Documents/cxvone/stopgame/apps/mobile/modules/lan-server/android/build/intermediates/tmp/ProcessLibraryManifest/release/tempAndroidManifest4496050079887107080.xml reason: use-sdk injection requested
+INJECTED from /Users/oscarmora/Documents/cxvone/stopgame/apps/mobile/modules/lan-server/android/build/intermediates/tmp/ProcessLibraryManifest/release/tempAndroidManifest4496050079887107080.xml
+INJECTED from /Users/oscarmora/Documents/cxvone/stopgame/apps/mobile/modules/lan-server/android/build/intermediates/tmp/ProcessLibraryManifest/release/tempAndroidManifest4496050079887107080.xml
 	android:targetSdkVersion
-		INJECTED from /Users/oscarmora/Documents/cxvone/stopgame/apps/mobile/modules/lan-server/android/build/intermediates/tmp/ProcessLibraryManifest/release/tempAndroidManifest1630873994483619175.xml
+		INJECTED from /Users/oscarmora/Documents/cxvone/stopgame/apps/mobile/modules/lan-server/android/build/intermediates/tmp/ProcessLibraryManifest/release/tempAndroidManifest4496050079887107080.xml
 	android:minSdkVersion
-		INJECTED from /Users/oscarmora/Documents/cxvone/stopgame/apps/mobile/modules/lan-server/android/build/intermediates/tmp/ProcessLibraryManifest/release/tempAndroidManifest1630873994483619175.xml
+		INJECTED from /Users/oscarmora/Documents/cxvone/stopgame/apps/mobile/modules/lan-server/android/build/intermediates/tmp/ProcessLibraryManifest/release/tempAndroidManifest4496050079887107080.xml
