@@ -712,7 +712,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       const base = getOnlineRealtimeBaseUrl();
       if (!base) {
         setErrorMessage(
-          'Modo Online no disponible en esta compilación. Usa WiFi local o configura EXPO_PUBLIC_ONLINE_WS_URL.'
+          'Modo Online no disponible en este momento. Usa Wi-Fi local para jugar sin internet.'
         );
         return false;
       }

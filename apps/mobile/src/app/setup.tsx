@@ -767,9 +767,11 @@ export default function SetupScreen() {
                     ? roomMode === 'online'
                       ? 'Creando sala online…'
                       : 'Conectando al servidor WiFi local…'
-                    : !onlineAvailable && roomMode === 'online'
-                      ? 'El modo Online no está disponible en este momento. Puedes jugar en Wi-Fi local sin internet.'
-                      : 'No se detectó sala activa. Puedes jugar solo o reconectar para invitar jugadores.'}
+                    : errorMessage
+                      ? errorMessage
+                      : !onlineAvailable && roomMode === 'online'
+                        ? 'El modo Online no está disponible en este momento. Puedes jugar en Wi-Fi local sin internet.'
+                        : 'No se detectó sala activa. Puedes jugar solo o reconectar para invitar jugadores.'}
                 </Text>
                 <View style={styles.offlineActions}>
                   <Pressable

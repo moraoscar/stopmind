@@ -11,12 +11,19 @@ const ALLOWED_BROWSER_ORIGINS = new Set<string>([
 ]);
 
 /**
- * Module 7.2 — CSWSH protection: native iOS/Android clients omit Origin;
- * any browser client sending an Origin header must match our strict whitelist.
+ * Module 7.2 — CSWSH protection:
+ * - Native clients may omit Origin or send the target server's own origin
+ *   (React Native iOS RCTWebSocketModule automatically sends Origin = target origin).
+ * - Browser clients from third-party websites send their own origin and are blocked
+ *   unless explicitly listed in ALLOWED_BROWSER_ORIGINS or localhost dev.
  */
-function isAllowedWsOrigin(originHeader: string | null): boolean {
+function isAllowedWsOrigin(
+  originHeader: string | null,
+  requestOrigin: string
+): boolean {
   if (!originHeader) return true;
   const origin = originHeader.trim();
+  if (origin === requestOrigin) return true;
   if (ALLOWED_BROWSER_ORIGINS.has(origin)) return true;
   if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d{2,5})?$/.test(origin)) {
     return true;
@@ -108,7 +115,8 @@ export class StopMindRoomDO implements DurableObject {
   }
 
   async fetch(request: Request): Promise<Response> {
-    if (!isAllowedWsOrigin(request.headers.get('Origin'))) {
+    const url = new URL(request.url);
+    if (!isAllowedWsOrigin(request.headers.get('Origin'), url.origin)) {
       return new Response(
         JSON.stringify({ error: 'Origin not allowed' }),
         { status: 403, headers: SECURITY_HEADERS }
@@ -123,7 +131,6 @@ export class StopMindRoomDO implements DurableObject {
       );
     }
 
-    const url = new URL(request.url);
     const roomCode = (url.searchParams.get('code') ?? '').trim().toUpperCase();
     if (!isValidRoomCode(roomCode)) {
       return new Response(

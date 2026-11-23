@@ -525,7 +525,7 @@ export default function JoinScreen() {
                   <Text style={styles.advancedToggleText}>
                     {onlineAvailable
                       ? 'Conecta por internet con el código de 4 letras'
-                      : 'Configura EXPO_PUBLIC_ONLINE_WS_URL para salas online'}
+                      : 'Modo Online no disponible en este momento'}
                   </Text>
                 </View>
               ) : (
