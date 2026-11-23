@@ -85,34 +85,69 @@ export function normalizeServerUrl(input: string): string {
   return `ws://${trimmed}:${DEFAULT_SERVER_PORT}`;
 }
 
+const PUBLIC_JOIN_BASE_URL = 'https://stopmind.cxvone.com/join';
+
 export function buildJoinQrPayload(wsUrl: string, roomCode: string): string {
   const encodedWs = encodeURIComponent(wsUrl);
   const encodedRoom = encodeURIComponent(roomCode.toUpperCase());
   return `stopmind://join?ws=${encodedWs}&room=${encodedRoom}`;
 }
 
+/**
+ * Builds a clickable HTTPS Universal Link / App Link ideal for WhatsApp, iMessage, and SMS.
+ * - Online rooms produce a clean short link: https://stopmind.cxvone.com/join?room=ABCD
+ * - Local WiFi rooms include the host LAN ws:// address so guests on the same WiFi auto-connect.
+ */
+export function buildShareableJoinLink(
+  wsUrl: string,
+  roomCode: string,
+  isOnline: boolean
+): string {
+  const cleanRoom = roomCode.trim().toUpperCase();
+  if (!cleanRoom) return PUBLIC_JOIN_BASE_URL;
+  if (isOnline) {
+    return `${PUBLIC_JOIN_BASE_URL}?room=${encodeURIComponent(cleanRoom)}`;
+  }
+  const encodedWs = encodeURIComponent(wsUrl);
+  return `${PUBLIC_JOIN_BASE_URL}?room=${encodeURIComponent(cleanRoom)}&ws=${encodedWs}`;
+}
+
 export interface ParsedJoinQr {
   wsUrl: string;
   roomCode: string;
+  isOnline: boolean;
 }
 
 export function parseJoinQrPayload(raw: string): ParsedJoinQr | null {
   const text = raw.trim();
   if (!text) return null;
 
-  // Format 1: stopgame://join?ws=...&room=...
+  // Format 1: stopmind://join?room=...&ws=... OR https://stopmind.cxvone.com/join?room=...(&ws=...)
   try {
     if (text.includes('://')) {
       const queryStart = text.indexOf('?');
       if (queryStart !== -1) {
         const params = new URLSearchParams(text.slice(queryStart + 1));
-        const ws = params.get('ws');
-        const room = params.get('room');
-        if (ws && room) {
-          return {
-            wsUrl: normalizeServerUrl(ws),
-            roomCode: room.trim().toUpperCase(),
-          };
+        const ws = params.get('ws')?.trim() ?? '';
+        const room = params.get('room')?.trim().toUpperCase() ?? '';
+        if (room) {
+          if (ws) {
+            const normalized = normalizeServerUrl(ws);
+            return {
+              wsUrl: normalized,
+              roomCode: room,
+              isOnline: isOnlineWsUrl(normalized),
+            };
+          }
+          // Universal Link without `ws` parameter -> Online room on Cloudflare
+          const onlineWs = buildOnlineRoomWsUrl(room);
+          if (onlineWs) {
+            return {
+              wsUrl: onlineWs,
+              roomCode: room,
+              isOnline: true,
+            };
+          }
         }
       }
     }
@@ -124,9 +159,11 @@ export function parseJoinQrPayload(raw: string): ParsedJoinQr | null {
   try {
     const parsed = JSON.parse(text) as { ws?: string; room?: string };
     if (parsed.ws && parsed.room) {
+      const normalized = normalizeServerUrl(parsed.ws);
       return {
-        wsUrl: normalizeServerUrl(parsed.ws),
+        wsUrl: normalized,
         roomCode: parsed.room.trim().toUpperCase(),
+        isOnline: isOnlineWsUrl(normalized),
       };
     }
   } catch {

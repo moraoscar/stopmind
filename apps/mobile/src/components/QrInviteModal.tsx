@@ -22,6 +22,7 @@ import {
   SPACING,
 } from '../theme/tokens';
 import { PlayerInfo } from '../types/game';
+import { buildShareableJoinLink } from '../utils/network';
 
 interface QrInviteModalProps {
   visible: boolean;
@@ -44,9 +45,10 @@ export function QrInviteModal({
 }: QrInviteModalProps) {
   const handleShareInvite = () => {
     if (!roomCode) return;
+    const shareLink = buildShareableJoinLink(wsUrl, roomCode, isOnline);
     const message = isOnline
-      ? `¡Únete a mi partida online de STOPMind! Código de sala: ${roomCode}${qrPayload ? `\nEnlace: ${qrPayload}` : ''}`
-      : `¡Únete a mi partida WiFi de STOPMind! Código de sala: ${roomCode}`;
+      ? `¡Únete a mi partida online de STOPMind! 🎯\nCódigo: ${roomCode}\n${shareLink}`
+      : `¡Únete a mi partida WiFi de STOPMind! 🎯\nCódigo: ${roomCode}\n${shareLink}`;
     void Share.share({ message });
   };
 

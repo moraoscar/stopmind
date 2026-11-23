@@ -35,7 +35,7 @@ Todos los cambios relevantes del proyecto se documentan en este archivo siguiend
 - **Modo Online privado a distancia** (`apps/realtime` + `apps/mobile`):
   - Nuevo servicio en tiempo real (`apps/realtime`) sobre WebSockets cifrados (`WSS` / TLS 1.3) con salas privadas efímeras en memoria RAM, soporte para hasta 16 jugadores por sala, transferencia automática de anfitrión y validación inteligente de palabras reutilizando `@stopmind/shared`.
   - Selector **`Wi-Fi local` / `Online`** en la pantalla de configuración de partida (`setup.tsx`) y en la pestaña de código manual al unirse (`join.tsx`).
-  - Botón nativo de **Compartir invitación** (`Share.share`) para enviar el código de sala y enlace directo por WhatsApp, iMessage u otras apps desde `setup.tsx` y `QrInviteModal.tsx`.
+  - Botón nativo de **Compartir invitación** (`Share.share`) con enlace HTTPS clickable (`https://stopmind.cxvone.com/join?room=XXXX`) compatible con **Universal Links (iOS)**, **App Links (Android)** y página puente web de respaldo (`apps/web/join.html` + `/.well-known/apple-app-site-association`) para abrir STOPMind! directamente en la sala.
 - **Persistencia local del nombre del jugador** (`apps/mobile/src/utils/playerStorage.ts`, `GameContext.tsx`):
   - El apodo del jugador se guarda **exclusivamente en el dispositivo** mediante `expo-file-system` (`Paths.document`, sin llamadas a APIs externas) y `localStorage` en web.
   - Se carga de manera síncrona al abrir la app para mostrar el nombre guardado desde el primer instante, tanto en la pantalla de inicio como al unirse a salas.

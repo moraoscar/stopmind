@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Únete a la partida — STOPMind!</title>
+  <meta
+    name="description"
+    content="Te invitaron a una partida de STOPMind! Toca para entrar a la sala y empezar a jugar."
+  />
+  <meta name="theme-color" content="#001C55" />
+  <link rel="icon" type="image/png" href="/assets/icon-256.png" />
+  <meta property="og:title" content="¡Únete a mi partida de STOPMind!" />
+  <meta
+    property="og:description"
+    content="Toca este enlace para abrir STOPMind! y entrar directo a la sala."
+  />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://stopmind.cxvone.com/assets/icon-256.png" />
+  <style>
+    :root {
+      --navy: #001c55;
+      --cream: #faf8f4;
+      --paper: #ffffff;
+      --ink: #111827;
+      --muted: #5a6073;
+      --border: #e6e0d4;
+      --red: #ef4444;
+      --red-dark: #dc2626;
+      --indigo: #4f46e5;
+      --indigo-soft: #eef2ff;
+      --emerald: #10b981;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100svh;
+      display: grid;
+      place-items: center;
+      padding: 24px 16px;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background:
+        radial-gradient(560px 380px at 80% 15%, rgba(34, 211, 238, 0.2), transparent 70%),
+        radial-gradient(520px 360px at 15% 85%, rgba(79, 70, 229, 0.34), transparent 70%),
+        linear-gradient(180deg, #001540 0%, var(--navy) 100%);
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+    }
+    .card {
+      width: min(440px, 100%);
+      background: var(--paper);
+      border-radius: 28px;
+      padding: 32px 24px 26px;
+      text-align: center;
+      box-shadow: 0 28px 64px rgba(0, 8, 28, 0.45);
+    }
+    .app-icon {
+      width: 72px;
+      height: 72px;
+      border-radius: 18px;
+      margin: 0 auto 14px;
+      display: block;
+      box-shadow: 0 10px 24px rgba(0, 28, 85, 0.22);
+    }
+    .eyebrow {
+      display: inline-block;
+      background: var(--indigo-soft);
+      color: var(--indigo);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      padding: 5px 12px;
+      border-radius: 999px;
+      margin-bottom: 10px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 26px;
+      font-weight: 900;
+      line-height: 1.15;
+    }
+    .sub {
+      margin: 0 0 22px;
+      font-size: 15px;
+      color: var(--muted);
+    }
+    .code-label {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      color: var(--muted);
+      margin-bottom: 10px;
+      text-transform: uppercase;
+    }
+    .code-tiles {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 22px;
+    }
+    .tile {
+      width: 54px;
+      height: 62px;
+      border-radius: 16px;
+      background: var(--cream);
+      border: 2px solid var(--indigo);
+      display: grid;
+      place-items: center;
+      font-size: 28px;
+      font-weight: 900;
+      color: var(--indigo);
+    }
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 15px 18px;
+      border-radius: 16px;
+      border: none;
+      font-family: inherit;
+      font-size: 16px;
+      font-weight: 800;
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform 0.15s ease, background-color 0.15s ease;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary {
+      background: var(--red);
+      color: #ffffff;
+      box-shadow: 0 10px 22px rgba(239, 68, 68, 0.35);
+      margin-bottom: 10px;
+    }
+    .btn-primary:hover { background: var(--red-dark); }
+    .btn-secondary {
+      background: var(--indigo-soft);
+      color: var(--indigo);
+      margin-bottom: 16px;
+    }
+    .helper {
+      margin: 0;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .helper a {
+      color: var(--indigo);
+      font-weight: 700;
+      text-decoration: none;
+    }
+    .helper a:hover { text-decoration: underline; }
+    .status {
+      min-height: 18px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--emerald);
+      margin: 0 0 10px;
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <img class="app-icon" src="/assets/icon-256.png" alt="STOPMind!" width="72" height="72" />
+    <span class="eyebrow" id="mode-badge">Invitación a partida</span>
+    <h1>¡Te invitaron a jugar STOPMind!</h1>
+    <p class="sub">Abre la app para entrar directamente a la sala y empezar la ronda.</p>
+
+    <div id="code-block" hidden>
+      <div class="code-label">Código de sala</div>
+      <div class="code-tiles" id="code-tiles"></div>
+    </div>
+
+    <a class="btn btn-primary" id="open-app-btn" href="stopmind://join">
+      Abrir STOPMind! y unirse
+    </a>
+
+    <button type="button" class="btn btn-secondary" id="copy-btn" hidden>
+      Copiar código de sala
+    </button>
+
+    <p class="status" id="status-msg" aria-live="polite"></p>
+
+    <p class="helper">
+      ¿Aún no tienes la app instalada? Conoce más en
+      <a href="https://stopmind.cxvone.com">stopmind.cxvone.com</a>.
+    </p>
+  </main>
+
+  <script>
+    (() => {
+      const params = new URLSearchParams(window.location.search);
+      const rawRoom = (params.get('room') || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
+      const rawWs = (params.get('ws') || '').trim();
+
+      const openBtn = document.getElementById('open-app-btn');
+      const copyBtn = document.getElementById('copy-btn');
+      const codeBlock = document.getElementById('code-block');
+      const codeTiles = document.getElementById('code-tiles');
+      const modeBadge = document.getElementById('mode-badge');
+      const statusMsg = document.getElementById('status-msg');
+
+      const query = new URLSearchParams();
+      if (rawRoom) query.set('room', rawRoom);
+      if (rawWs && (rawWs.startsWith('ws://') || rawWs.startsWith('wss://'))) {
+        query.set('ws', rawWs);
+      }
+
+      const deepLink = query.toString()
+        ? `stopmind://join?${query.toString()}`
+        : 'stopmind://join';
+
+      if (openBtn) openBtn.setAttribute('href', deepLink);
+
+      if (modeBadge) {
+        modeBadge.textContent = rawWs.startsWith('ws://')
+          ? 'Sala Wi-Fi local'
+          : 'Sala Online privada';
+      }
+
+      if (rawRoom && codeBlock && codeTiles) {
+        codeBlock.hidden = false;
+        codeTiles.replaceChildren(
+          ...rawRoom.split('').map((ch) => {
+            const el = document.createElement('span');
+            el.className = 'tile';
+            el.textContent = ch;
+            return el;
+          })
+        );
+        if (copyBtn) {
+          copyBtn.hidden = false;
+          copyBtn.addEventListener('click', async () => {
+            try {
+              await navigator.clipboard.writeText(rawRoom);
+              if (statusMsg) statusMsg.textContent = `Código ${rawRoom} copiado`;
+            } catch {
+              if (statusMsg) statusMsg.textContent = `Código: ${rawRoom}`;
+            }
+          });
+        }
+      }
+
+      // Attempt automatic handoff to installed STOPMind! app
+      if (rawRoom) {
+        window.location.href = deepLink;
+      }
+    })();
+  </script>
+</body>
+</html>

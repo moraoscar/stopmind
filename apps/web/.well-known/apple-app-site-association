@@ -1,0 +1,15 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["3NPWZ6L7JU.com.cxvone.stopmind"],
+        "components": [
+          {
+            "/": "/join*",
+            "comment": "Open STOPMind! directly into a room invite"
+          }
+        ]
+      }
+    ]
+  }
+}

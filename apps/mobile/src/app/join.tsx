@@ -31,7 +31,11 @@ import {
 import { formatSeconds, parseJoinQrPayload } from '../utils/network';
 
 export default function JoinScreen() {
-  const params = useLocalSearchParams<{ ws?: string; room?: string }>();
+  const params = useLocalSearchParams<{
+    ws?: string;
+    room?: string;
+    mode?: string;
+  }>();
   const {
     playerName,
     setPlayerName,
@@ -51,7 +55,11 @@ export default function JoinScreen() {
   const [mode, setMode] = useState<'qr' | 'manual'>(
     params.room ? 'manual' : 'qr'
   );
-  const [joinChannel, setJoinChannel] = useState<'lan' | 'online'>('lan');
+  const [joinChannel, setJoinChannel] = useState<'lan' | 'online'>(
+    params.mode === 'online' || (typeof params.room === 'string' && !params.ws)
+      ? 'online'
+      : 'lan'
+  );
   const [roomCodeInput, setRoomCodeInput] = useState(
     typeof params.room === 'string' ? params.room.toUpperCase() : ''
   );
@@ -65,7 +73,7 @@ export default function JoinScreen() {
     []
   );
 
-  const autoJoinedRef = useRef(false);
+  const lastAutoJoinKeyRef = useRef<string | null>(null);
   const joiningRef = useRef(false);
 
   // Discover nearby STOP! rooms on the same WiFi automatically (Bonjour / NSD)
@@ -91,14 +99,23 @@ export default function JoinScreen() {
     };
   }, [connectionStatus]);
 
-  // Auto-join if launched from a deep link QR
+  // Auto-join if launched from a Universal Link, deep link, or QR
   useEffect(() => {
-    if (autoJoinedRef.current) return;
-    if (typeof params.ws === 'string' && typeof params.room === 'string') {
-      autoJoinedRef.current = true;
-      void joinLanRoom(params.ws, params.room);
+    const cleanRoom =
+      typeof params.room === 'string' ? params.room.trim().toUpperCase() : '';
+    const cleanWs = typeof params.ws === 'string' ? params.ws.trim() : '';
+    if (!cleanRoom) return;
+
+    const joinKey = `${cleanRoom}::${cleanWs}`;
+    if (lastAutoJoinKeyRef.current === joinKey) return;
+    lastAutoJoinKeyRef.current = joinKey;
+
+    if (cleanWs) {
+      void joinLanRoom(cleanWs, cleanRoom);
+    } else {
+      void joinOnlineRoom(cleanRoom);
     }
-  }, [joinLanRoom, params.room, params.ws]);
+  }, [joinLanRoom, joinOnlineRoom, params.room, params.ws]);
 
   const attemptJoin = async (targetWs: string, targetCode: string) => {
     if (joiningRef.current) return;

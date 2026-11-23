@@ -33,7 +33,7 @@ import {
   SIZES,
   SPACING,
 } from '../theme/tokens';
-import { formatSeconds } from '../utils/network';
+import { buildShareableJoinLink, formatSeconds } from '../utils/network';
 
 export default function SetupScreen() {
   const {
@@ -738,10 +738,15 @@ export default function SetupScreen() {
 
                   <Pressable
                     onPress={() => {
+                      const shareLink = buildShareableJoinLink(
+                        effectiveWsUrl,
+                        room.roomCode,
+                        roomMode === 'online'
+                      );
                       const msg =
                         roomMode === 'online'
-                          ? `¡Únete a mi sala online de STOPMind! Código: ${room.roomCode}${qrPayload ? `\n${qrPayload}` : ''}`
-                          : `¡Únete a mi sala WiFi de STOPMind! Código: ${room.roomCode}`;
+                          ? `¡Únete a mi partida online de STOPMind! 🎯\nCódigo: ${room.roomCode}\n${shareLink}`
+                          : `¡Únete a mi partida WiFi de STOPMind! 🎯\nCódigo: ${room.roomCode}\n${shareLink}`;
                       void Share.share({ message: msg });
                     }}
                     style={styles.shareIconBtn}
