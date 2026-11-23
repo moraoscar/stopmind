@@ -28,7 +28,9 @@ export function phoneticKey(normalized: string): string {
   s = s.replace(/c/g, 'k');
   s = s.replace(/g([ei])/g, 'j$1');
   s = s.replace(/w/g, 'u');
-  s = s.replace(/(.)\1+/g, '$1');
+  // Preserve Spanish "rr" (perro != pero, carro != caro); collapse other accidental doubles
+  s = s.replace(/([^r])\1+/g, '$1');
+  s = s.replace(/r{3,}/g, 'rr');
   return s;
 }
 
@@ -66,41 +68,38 @@ export function damerauLevenshtein(a: string, b: string): number {
   return dp[m][n];
 }
 
+/**
+ * Determines whether two answers represent the SAME word (duplicate -> 50 pts)
+ * vs. two distinct words (unique -> 100 pts).
+ *
+ * Intentionally strict to prevent false positives on distinct Spanish words, names,
+ * and surnames that differ by 1-2 letters (e.g. "Frías" vs "Farías", "María" vs "Mario",
+ * "Daniel" vs "Daniela", "Sofía" vs "Sonia", "Rojas" vs "Rosas", "Pérez" vs "Páez").
+ */
 export function areWordsSimilar(rawA: string, rawB: string): boolean {
   const a = normalizeWord(rawA);
   const b = normalizeWord(rawB);
   if (!a || !b) return false;
   if (a === b) return true;
 
+  // Exact Spanish phonetic/orthographic twin (e.g. Gómez/Gomes, Jirafa/Girafa, Ballena/Bayena)
   const pa = phoneticKey(a);
   const pb = phoneticKey(b);
   if (pa.length >= 2 && pa === pb) return true;
 
-  const maxLen = Math.max(a.length, b.length);
-  const dist = damerauLevenshtein(a, b);
-  const pDist = damerauLevenshtein(pa, pb);
-
-  if (maxLen <= 3) return false;
-
-  const isPureTransposition =
-    a.length === b.length &&
-    dist === 1 &&
-    a.split('').sort().join('') === b.split('').sort().join('');
-
-  if (maxLen <= 5) {
-    const isInsDel = Math.abs(a.length - b.length) === 1 && dist === 1;
-    return isPureTransposition || (maxLen >= 5 && isInsDel);
+  // Only allow a single adjacent-letter transposition typo on long words (>= 7 chars)
+  // e.g. "Manzana" vs "Manazna", "Colombia" vs "Colomiba"
+  if (a.length >= 7 && a.length === b.length) {
+    const dist = damerauLevenshtein(a, b);
+    if (
+      dist === 1 &&
+      a.split('').sort().join('') === b.split('').sort().join('')
+    ) {
+      return true;
+    }
   }
 
-  if (maxLen <= 7) {
-    const pMaxLen = Math.max(pa.length, pb.length);
-    return dist <= 1 || (pMaxLen >= 6 && pDist <= 1);
-  }
-
-  const similarity = 1 - dist / maxLen;
-  const pMaxLen = Math.max(pa.length, pb.length);
-  const pSimilarity = pMaxLen > 0 ? 1 - pDist / pMaxLen : 0;
-  return dist <= 2 || pDist <= 2 || similarity >= 0.78 || pSimilarity >= 0.8;
+  return false;
 }
 
 export function startsWithLetter(rawWord: string, letter: string): boolean {

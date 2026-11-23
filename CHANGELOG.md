@@ -43,6 +43,9 @@ Todos los cambios relevantes del proyecto se documentan en este archivo siguiend
   - Nuevo plugin de configuración Expo `apps/mobile/plugins/withAndroidLanNetwork.js` que configura `network_security_config.xml` y agrega los permisos `ACCESS_WIFI_STATE`, `CHANGE_WIFI_MULTICAST_STATE` y `ACCESS_NETWORK_STATE`.
   - Adquisición y liberación automática de `WifiManager.MulticastLock` en `LanServerModule.kt` para descubrimiento confiable `_stopmind._tcp.` entre dispositivos Android y iOS.
 
+### Corregido
+- **Detección de respuestas repetidas (`packages/shared/src/scoring.ts`)**: corregidos falsos positivos por similitud laxa de 1–2 letras entre palabras, nombres o apellidos distintos (ej. *Frías* vs *Farías*, *María* vs *Mario*, *Daniel* vs *Daniela*, *Perro* vs *Pero*), conservando la detección exacta por tildes, equivalentes fonéticos en español (*Gómez*/*Gomes*, *Jirafa*/*Girafa*) y trasposiciones accidentales en palabras largas.
+
 ### Seguridad y Resiliencia
 - **Recuperación segura global (`AppErrorBoundary`)**: pantalla de recuperación amigable con código de correlación opaco (`SM-XXXX-XXXX`), sin exponer trazas ni rutas internas, y hook `setCrashReporter()` listo para conectar Sentry o Crashlytics.
 - **Whitelist estricta en Deep Links, QR y WebSockets** (`apps/mobile/src/utils/security.ts`, `network.ts`, `GameContext.tsx`): valida esquema, dominio oficial o IP privada LAN (bloqueando hosts de terceros, `ws://` públicos e IPs de metadatos en nube).

@@ -50,7 +50,7 @@
       "executor": "nx:run-commands",
       "options": {
         "cwd": "apps/mobile",
-        "command": "npx tsx --test src/__tests__/security.test.ts"
+        "command": "npx tsx --test src/__tests__/*.test.ts"
       }
     }
   }
