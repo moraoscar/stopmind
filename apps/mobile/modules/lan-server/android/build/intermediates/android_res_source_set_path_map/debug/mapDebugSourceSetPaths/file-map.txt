@@ -1,0 +1,9 @@
+expo.modules.lanserver.lan-server-pngs-0 /Users/oscarmora/Documents/cxvone/stopgame/apps/mobile/modules/lan-server/android/build/generated/res/pngs/debug
+expo.modules.lanserver.lan-server-updated_navigation_xml-1 /Users/oscarmora/Documents/cxvone/stopgame/apps/mobile/modules/lan-server/android/build/generated/updated_navigation_xml/debug
+expo.modules.lanserver.lan-server-mergeDebugResources-2 /Users/oscarmora/Documents/cxvone/stopgame/apps/mobile/modules/lan-server/android/build/intermediates/incremental/debug/mergeDebugResources/merged.dir
+expo.modules.lanserver.lan-server-mergeDebugResources-3 /Users/oscarmora/Documents/cxvone/stopgame/apps/mobile/modules/lan-server/android/build/intermediates/incremental/debug/mergeDebugResources/stripped.dir
+expo.modules.lanserver.lan-server-debug-4 /Users/oscarmora/Documents/cxvone/stopgame/apps/mobile/modules/lan-server/android/build/intermediates/merged_res/debug/mergeDebugResources
+expo.modules.lanserver.lan-server-debug-5 /Users/oscarmora/Documents/cxvone/stopgame/apps/mobile/modules/lan-server/android/build/intermediates/packaged_res/debug/packageDebugResources
+expo.modules.lanserver.lan-server-debug-6 /Users/oscarmora/Documents/cxvone/stopgame/apps/mobile/modules/lan-server/android/src/debug/res
+expo.modules.lanserver.lan-server-main-7 /Users/oscarmora/Documents/cxvone/stopgame/apps/mobile/modules/lan-server/android/src/main/res
+gradleHome-0 /Users/oscarmora/.gradle
