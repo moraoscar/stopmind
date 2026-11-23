@@ -34,6 +34,10 @@ import {
   isOnlineWsUrl,
   normalizeServerUrl,
 } from '../utils/network';
+import {
+  loadSavedPlayerName,
+  savePlayerNameLocal,
+} from '../utils/playerStorage';
 
 export type RoomMode = 'lan' | 'online';
 
@@ -118,7 +122,9 @@ function triggerHaptic(type: 'light' | 'success' | 'warning') {
 }
 
 export function GameProvider({ children }: { children: React.ReactNode }) {
-  const [playerName, setPlayerNameState] = useState('Jugador');
+  const [playerName, setPlayerNameState] = useState<string>(() =>
+    loadSavedPlayerName()
+  );
   const [serverUrl, setServerUrlState] = useState<string>(() =>
     getDefaultLanServerUrl()
   );
@@ -191,6 +197,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   const setPlayerName = useCallback((name: string) => {
     setPlayerNameState(name);
+    savePlayerNameLocal(name);
     if (embeddedHostRef.current) {
       embeddedHostRef.current.updateHostName(name);
     }
@@ -640,7 +647,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       const safeName =
         (nameOverride ?? playerNameRef.current).trim() || 'Jugador';
       if (nameOverride && nameOverride.trim()) {
-        setPlayerNameState(nameOverride.trim());
+        const cleaned = nameOverride.trim();
+        setPlayerNameState(cleaned);
+        savePlayerNameLocal(cleaned);
       }
       return openAndHandshake(
         wsUrl,
