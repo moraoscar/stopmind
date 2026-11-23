@@ -15,6 +15,14 @@ import {
   scoreRoundLocal,
 } from '@stopmind/shared';
 import { validateRoundViaBackend } from '../utils/apiValidator';
+import {
+  canonicalizeRoomCode,
+  MAX_LAN_MESSAGE_BYTES,
+  MAX_LAN_PLAYERS,
+  MAX_PLAYER_NAME_LENGTH,
+  sanitizeDisplayText,
+  sanitizeIncomingAnswers,
+} from '../utils/security';
 
 export interface EmbeddedHostCallbacks {
   onRoomState: (room: RoomSnapshot) => void;
@@ -453,15 +461,17 @@ export class EmbeddedHostEngine {
     const player = this.players.get(playerId);
     if (!player) return;
 
-    this.roundAnswers[playerId] = { ...answers };
+    const cleanAnswers = sanitizeIncomingAnswers(answers, this.config.categories);
+    this.roundAnswers[playerId] = cleanAnswers;
     if (typeof hintsUsed === 'number' && Number.isFinite(hintsUsed)) {
+      const clampedHints = Math.min(20, Math.max(0, Math.floor(hintsUsed)));
       this.roundHintsUsed[playerId] = Math.max(
         this.roundHintsUsed[playerId] ?? 0,
-        Math.floor(hintsUsed)
+        clampedHints
       );
     }
     const filled = this.config.categories.filter(
-      (cat) => typeof answers[cat] === 'string' && answers[cat].trim().length > 0
+      (cat) => typeof cleanAnswers[cat] === 'string' && cleanAnswers[cat].trim().length > 0
     ).length;
 
     if (player.filledCount !== filled) {
@@ -480,12 +490,16 @@ export class EmbeddedHostEngine {
     if (!player) return;
 
     if (answers) {
-      this.roundAnswers[playerId] = { ...answers };
+      this.roundAnswers[playerId] = sanitizeIncomingAnswers(
+        answers,
+        this.config.categories
+      );
     }
     if (typeof hintsUsed === 'number' && Number.isFinite(hintsUsed)) {
+      const clampedHints = Math.min(20, Math.max(0, Math.floor(hintsUsed)));
       this.roundHintsUsed[playerId] = Math.max(
         this.roundHintsUsed[playerId] ?? 0,
-        Math.floor(hintsUsed)
+        clampedHints
       );
     }
     this.submittedPlayers.add(playerId);
@@ -498,23 +512,34 @@ export class EmbeddedHostEngine {
   }
 
   private handleClientMessage(clientId: string, rawMessage: string): void {
+    // Module 6 (API4) & 9.3 — Reject oversized LAN payloads to prevent logical DoS
+    if (typeof rawMessage !== 'string' || rawMessage.length > MAX_LAN_MESSAGE_BYTES) {
+      this.sendToGuest(clientId, {
+        type: 'error',
+        message: 'Mensaje demasiado grande.',
+      });
+      return;
+    }
+
     let msg: Record<string, unknown>;
     try {
-      msg = JSON.parse(rawMessage) as Record<string, unknown>;
+      const parsed = JSON.parse(rawMessage);
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        return;
+      }
+      msg = parsed as Record<string, unknown>;
     } catch {
       return;
     }
 
     switch (msg.type) {
       case 'join_room': {
-        const requestedCode =
-          typeof msg.roomCode === 'string'
-            ? msg.roomCode.trim().toUpperCase()
-            : '';
-        if (requestedCode !== this.roomCode) {
+        const requestedCode = canonicalizeRoomCode(msg.roomCode);
+        if (!requestedCode || requestedCode !== this.roomCode) {
+          // Module 9.3 — Opaque error: never disclose the active room code
           this.sendToGuest(clientId, {
             type: 'error',
-            message: `Código incorrecto. La sala en este teléfono es "${this.roomCode}".`,
+            message: 'Código de sala incorrecto. Verifica el código con el anfitrión.',
           });
           return;
         }
@@ -527,15 +552,21 @@ export class EmbeddedHostEngine {
         }
 
         const existingId = this.clientToPlayerId.get(clientId);
+        if (!existingId && this.players.size >= MAX_LAN_PLAYERS) {
+          this.sendToGuest(clientId, {
+            type: 'error',
+            message: `La sala alcanzó el límite máximo de ${MAX_LAN_PLAYERS} jugadores.`,
+          });
+          return;
+        }
         if (existingId) {
           this.players.delete(existingId);
         }
 
         const playerId = `ply_${Math.random().toString(36).slice(2, 9)}`;
         const playerName =
-          typeof msg.playerName === 'string' && msg.playerName.trim()
-            ? msg.playerName.trim().slice(0, 24)
-            : `Jugador ${this.players.size + 1}`;
+          sanitizeDisplayText(msg.playerName, MAX_PLAYER_NAME_LENGTH) ||
+          `Jugador ${this.players.size + 1}`;
 
         this.players.set(playerId, {
           id: playerId,
@@ -585,14 +616,16 @@ export class EmbeddedHostEngine {
         if (!playerId) return;
         if (this.phase !== 'playing' && this.phase !== 'scoring') return;
         if (msg.answers && typeof msg.answers === 'object') {
-          this.roundAnswers[playerId] = {
-            ...(msg.answers as Record<string, string>),
-          };
+          this.roundAnswers[playerId] = sanitizeIncomingAnswers(
+            msg.answers,
+            this.config.categories
+          );
         }
         if (typeof msg.hintsUsed === 'number' && Number.isFinite(msg.hintsUsed)) {
+          const clampedHints = Math.min(20, Math.max(0, Math.floor(msg.hintsUsed)));
           this.roundHintsUsed[playerId] = Math.max(
             this.roundHintsUsed[playerId] ?? 0,
-            Math.floor(msg.hintsUsed)
+            clampedHints
           );
         }
         this.submittedPlayers.add(playerId);

@@ -67,6 +67,7 @@ function withAndroidLanNetwork(config) {
     if (app && app.$) {
       app.$['android:usesCleartextTraffic'] = 'true';
       app.$['android:networkSecurityConfig'] = '@xml/network_security_config';
+      app.$['android:allowBackup'] = 'false';
     }
 
     return modConfig;

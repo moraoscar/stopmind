@@ -5,6 +5,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AnimatedSplash } from '../components/AnimatedSplash';
+import { AppErrorBoundary } from '../components/AppErrorBoundary';
 import { GameProvider } from '../context/GameContext';
 import { COLORS } from '../theme/tokens';
 import { parseJoinQrPayload } from '../utils/network';
@@ -41,26 +42,28 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <GameProvider>
-        <StatusBar style={splashDone ? 'dark' : 'light'} />
-        <DeepLinkWatcher onInviteLink={() => setSplashDone(true)} />
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: COLORS.bg },
-            animation: 'slide_from_right',
-          }}
-        >
-          <Stack.Screen name="index" />
-          <Stack.Screen name="setup" />
-          <Stack.Screen name="join" />
-          <Stack.Screen name="play" options={{ gestureEnabled: false }} />
-          <Stack.Screen name="results" options={{ gestureEnabled: false }} />
-        </Stack>
-        {!splashDone && (
-          <AnimatedSplash onFinish={() => setSplashDone(true)} />
-        )}
-      </GameProvider>
+      <AppErrorBoundary>
+        <GameProvider>
+          <StatusBar style={splashDone ? 'dark' : 'light'} />
+          <DeepLinkWatcher onInviteLink={() => setSplashDone(true)} />
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: COLORS.bg },
+              animation: 'slide_from_right',
+            }}
+          >
+            <Stack.Screen name="index" />
+            <Stack.Screen name="setup" />
+            <Stack.Screen name="join" />
+            <Stack.Screen name="play" options={{ gestureEnabled: false }} />
+            <Stack.Screen name="results" options={{ gestureEnabled: false }} />
+          </Stack>
+          {!splashDone && (
+            <AnimatedSplash onFinish={() => setSplashDone(true)} />
+          )}
+        </GameProvider>
+      </AppErrorBoundary>
     </SafeAreaProvider>
   );
 }

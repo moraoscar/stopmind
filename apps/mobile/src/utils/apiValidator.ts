@@ -3,6 +3,14 @@ import {
   ApiValidateRoundResponse,
   makeValidationKey,
 } from '@stopmind/shared';
+import {
+  BoundedMap,
+  isAllowedApiBaseUrl,
+  MAX_HINT_LENGTH,
+  MAX_LOCAL_CACHE_ENTRIES,
+  MAX_REASON_LENGTH,
+  sanitizeDisplayText,
+} from './security';
 
 export interface WordCheckItem {
   key: string;
@@ -16,8 +24,10 @@ export interface WordVerdict {
   reason?: string;
 }
 
-// Local session cache on the phone so repeated words never even hit the backend
-const localVerdictCache = new Map<string, WordVerdict>();
+// Module 9.3 — Bounded local session cache (max 500 entries) so memory never grows unbounded
+const localVerdictCache = new BoundedMap<string, WordVerdict>(
+  MAX_LOCAL_CACHE_ENTRIES
+);
 
 // Ephemeral anonymous installation ID for fair rate-limiting (zero PII)
 const anonymousClientId = `sm_${Math.random().toString(36).slice(2, 12)}`;
@@ -25,7 +35,8 @@ const anonymousClientId = `sm_${Math.random().toString(36).slice(2, 12)}`;
 function getApiBaseUrl(): string {
   const raw = process.env.EXPO_PUBLIC_API_URL;
   if (typeof raw !== 'string') return '';
-  return raw.trim().replace(/\/+$/, '');
+  const cleaned = raw.trim().replace(/\/+$/, '');
+  return isAllowedApiBaseUrl(cleaned) ? cleaned : '';
 }
 
 /**
@@ -95,9 +106,12 @@ export async function validateRoundViaBackend(params: {
       for (const row of data.verdicts) {
         const original = uncached[row.id];
         if (!original) continue;
+        const sanitizedReason = row.valid
+          ? undefined
+          : sanitizeDisplayText(row.reason, MAX_REASON_LENGTH) || undefined;
         const verdict: WordVerdict = {
           valid: Boolean(row.valid),
-          reason: row.valid ? undefined : row.reason || undefined,
+          reason: sanitizedReason,
         };
         const key = makeValidationKey(original.category, original.word);
         localVerdictCache.set(key, verdict);
@@ -141,9 +155,8 @@ export async function fetchHintViaBackend(params: {
     clearTimeout(timer);
     if (!res.ok) return null;
     const data = (await res.json()) as ApiHintResponse;
-    return typeof data.word === 'string' && data.word.trim()
-      ? data.word.trim()
-      : null;
+    const sanitizedWord = sanitizeDisplayText(data?.word, MAX_HINT_LENGTH);
+    return sanitizedWord || null;
   } catch {
     clearTimeout(timer);
     return null;

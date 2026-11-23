@@ -38,6 +38,13 @@ import {
   loadSavedPlayerName,
   savePlayerNameLocal,
 } from '../utils/playerStorage';
+import {
+  isAllowedRealtimeWsUrl,
+  isValidRoomSnapshot,
+  isValidRoundResults,
+  MAX_WS_INCOMING_BYTES,
+  sanitizeDisplayText,
+} from '../utils/security';
 
 export type RoomMode = 'lan' | 'online';
 
@@ -267,6 +274,18 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         closeSocket();
         stopEmbeddedHost();
         const url = normalizeServerUrl(rawUrl);
+        if (!isAllowedRealtimeWsUrl(url, getOnlineRealtimeBaseUrl())) {
+          if (fallbackToLocal) {
+            setConnectionStatus('local');
+            setRoom(null);
+            setPlayerId('local_player');
+          } else {
+            setConnectionStatus('disconnected');
+            setErrorMessage('Dirección de servidor no autorizada o inválida.');
+          }
+          resolve(false);
+          return;
+        }
         const onlineAttempt = isOnlineWsUrl(url);
         setRoomMode(onlineAttempt ? 'online' : 'lan');
         setServerUrlState(url);
@@ -328,18 +347,29 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           if (attemptSeq !== connectSeqRef.current || wsRef.current !== ws) {
             return;
           }
+          const rawText = typeof event.data === 'string' ? event.data : String(event.data ?? '');
+          if (rawText.length > MAX_WS_INCOMING_BYTES) {
+            return;
+          }
           let msg: Record<string, unknown>;
           try {
-            msg = JSON.parse(String(event.data));
+            const parsed = JSON.parse(rawText);
+            if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+              return;
+            }
+            msg = parsed as Record<string, unknown>;
           } catch {
             return;
           }
 
           switch (msg.type) {
             case 'joined': {
+              if (!isValidRoomSnapshot(msg.room)) {
+                return;
+              }
               clearTimeout(connectTimeout);
-              const joinedPlayerId = String(msg.playerId ?? '');
-              const snapshot = msg.room as RoomSnapshot;
+              const joinedPlayerId = sanitizeDisplayText(msg.playerId, 64);
+              const snapshot = msg.room;
               setPlayerId(joinedPlayerId);
               setRoom(snapshot);
               setConfig(snapshot.config);
@@ -353,7 +383,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
             }
 
             case 'room_state': {
-              const snapshot = msg.room as RoomSnapshot;
+              if (!isValidRoomSnapshot(msg.room)) {
+                return;
+              }
+              const snapshot = msg.room;
               const prevPhase = roomRef.current?.phase;
               setRoom(snapshot);
               setConfig(snapshot.config);
@@ -378,13 +411,19 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
                 clearTimeout(resultsNavTimerRef.current);
                 resultsNavTimerRef.current = null;
               }
-              const roundNumber = Number(msg.roundNumber ?? 1);
-              const letter = String(msg.letter ?? 'A');
-              const durationSeconds = Number(msg.durationSeconds ?? 60);
-              const serverNow = Number(msg.serverNow ?? Date.now());
-              const endsAtServer = Number(
-                msg.endsAt ?? serverNow + durationSeconds * 1000
-              );
+              const roundNumber = Number.isFinite(Number(msg.roundNumber))
+                ? Math.max(1, Math.min(50, Math.floor(Number(msg.roundNumber))))
+                : 1;
+              const letter = sanitizeDisplayText(msg.letter, 2).toUpperCase() || 'A';
+              const durationSeconds = Number.isFinite(Number(msg.durationSeconds))
+                ? Math.max(10, Math.min(600, Number(msg.durationSeconds)))
+                : 60;
+              const serverNow = Number.isFinite(Number(msg.serverNow))
+                ? Number(msg.serverNow)
+                : Date.now();
+              const endsAtServer = Number.isFinite(Number(msg.endsAt))
+                ? Number(msg.endsAt)
+                : serverNow + durationSeconds * 1000;
               const clockOffset = Date.now() - serverNow;
               const localEndsAt = endsAtServer + clockOffset;
 
@@ -409,7 +448,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
                 | 'stop'
                 | 'timeout';
               const stoppedByName =
-                typeof msg.stoppedByName === 'string' ? msg.stoppedByName : null;
+                typeof msg.stoppedByName === 'string'
+                  ? sanitizeDisplayText(msg.stoppedByName, 24) || null
+                  : null;
 
               setIsRoundLocked(true);
               isRoundLockedRef.current = true;
@@ -429,7 +470,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
             }
 
             case 'round_results': {
-              const results = msg.results as RoundResults;
+              if (!isValidRoundResults(msg.results)) {
+                return;
+              }
+              const results = msg.results;
               setRoundResults(results);
               setIsRoundLocked(true);
               isRoundLockedRef.current = true;
@@ -447,9 +491,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
             case 'error': {
               clearTimeout(connectTimeout);
               const message =
-                typeof msg.message === 'string'
-                  ? msg.message
-                  : 'Error de conexión con la sala.';
+                sanitizeDisplayText(msg.message, 160) ||
+                'Error de conexión con la sala.';
               setErrorMessage(message);
               if (!settled) {
                 settled = true;

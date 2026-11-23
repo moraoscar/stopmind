@@ -11,9 +11,6 @@ Todos los cambios relevantes del proyecto se documentan en este archivo siguiend
 
 ## [Unreleased]
 
-### Agregado
-- _(Pendiente de próximos cambios)_
-
 ---
 
 ## [1.1.0] - 2026-11-22
@@ -45,6 +42,17 @@ Todos los cambios relevantes del proyecto se documentan en este archivo siguiend
 - **Soporte de red local Android para producción (iPhone ↔ Android)**:
   - Nuevo plugin de configuración Expo `apps/mobile/plugins/withAndroidLanNetwork.js` que configura `network_security_config.xml` y agrega los permisos `ACCESS_WIFI_STATE`, `CHANGE_WIFI_MULTICAST_STATE` y `ACCESS_NETWORK_STATE`.
   - Adquisición y liberación automática de `WifiManager.MulticastLock` en `LanServerModule.kt` para descubrimiento confiable `_stopmind._tcp.` entre dispositivos Android y iOS.
+
+### Seguridad y Resiliencia
+- **Recuperación segura global (`AppErrorBoundary`)**: pantalla de recuperación amigable con código de correlación opaco (`SM-XXXX-XXXX`), sin exponer trazas ni rutas internas, y hook `setCrashReporter()` listo para conectar Sentry o Crashlytics.
+- **Whitelist estricta en Deep Links, QR y WebSockets** (`apps/mobile/src/utils/security.ts`, `network.ts`, `GameContext.tsx`): valida esquema, dominio oficial o IP privada LAN (bloqueando hosts de terceros, `ws://` públicos e IPs de metadatos en nube).
+- **Validación de esquemas y cotas anti-DoS**:
+  - `BoundedMap` (máx. 500 entradas) y validación/sanitización de salidas en `apiValidator.ts`, además de exigir `https://` en endpoints públicos.
+  - `EmbeddedHostEngine.ts`: tope de `16 KB` por mensaje, máximo `12` jugadores, saneamiento de `answers` contra contaminación de prototipos y error opaco sin revelar el código de sala.
+  - `GameContext.tsx`: validación en tiempo de ejecución de `RoomSnapshot` y `RoundResults` antes de renderizar.
+  - `apps/realtime`: validación de cabecera `Origin` (mitigación CSWSH) y límite de tamaño de frame WebSocket en el borde.
+- **Hardening Android y Cadena de Suministro**: `android:allowBackup="false"`, pruebas unitarias de seguridad en `apps/mobile` y scripts `security:audit` / `security:sbom`.
+
 
 ### Cambiado
 - **Privacidad y textos visibles sin exposición de proveedores**:

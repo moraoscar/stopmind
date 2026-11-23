@@ -24,6 +24,8 @@
     "typecheck": "nx run-many -t typecheck",
     "lint": "nx run-many -t lint",
     "test": "nx run-many -t test",
+    "security:audit": "npm audit --omit=dev",
+    "security:sbom": "npx @cyclonedx/cyclonedx-npm --omit dev --output-file sbom.cdx.json",
     "graph": "nx graph"
   },
   "devDependencies": {

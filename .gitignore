@@ -20,3 +20,4 @@ npm-debug.*
 .DS_Store
 *.pem
 *.tsbuildinfo
+sbom.cdx.json

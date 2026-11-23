@@ -1,6 +1,11 @@
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import { DEFAULT_SERVER_PORT } from '../constants/game';
+import {
+  canonicalizeRoomCode,
+  isAllowedInviteLinkUrl,
+  isAllowedRealtimeWsUrl,
+} from './security';
 
 /**
  * Automatically discovers the host machine's local WiFi IP from Expo Go / Metro
@@ -120,28 +125,36 @@ export interface ParsedJoinQr {
 
 export function parseJoinQrPayload(raw: string): ParsedJoinQr | null {
   const text = raw.trim();
-  if (!text) return null;
+  if (!text || text.length > 1024) return null;
+
+  const configuredOnlineBase = getOnlineRealtimeBaseUrl();
 
   // Format 1: stopmind://join?room=...&ws=... OR https://stopmind.cxvone.com/join?room=...(&ws=...)
   try {
     if (text.includes('://')) {
+      if (!isAllowedInviteLinkUrl(text)) {
+        return null;
+      }
       const queryStart = text.indexOf('?');
       if (queryStart !== -1) {
         const params = new URLSearchParams(text.slice(queryStart + 1));
         const ws = params.get('ws')?.trim() ?? '';
-        const room = params.get('room')?.trim().toUpperCase() ?? '';
+        const room = canonicalizeRoomCode(params.get('room'));
         if (room) {
           if (ws) {
             const normalized = normalizeServerUrl(ws);
+            if (!isAllowedRealtimeWsUrl(normalized, configuredOnlineBase)) {
+              return null;
+            }
             return {
               wsUrl: normalized,
               roomCode: room,
               isOnline: isOnlineWsUrl(normalized),
             };
           }
-          // Universal Link without `ws` parameter -> Online room on Cloudflare
+          // Universal Link without `ws` parameter -> Online room on official realtime host
           const onlineWs = buildOnlineRoomWsUrl(room);
-          if (onlineWs) {
+          if (onlineWs && isAllowedRealtimeWsUrl(onlineWs, configuredOnlineBase)) {
             return {
               wsUrl: onlineWs,
               roomCode: room,
@@ -157,12 +170,16 @@ export function parseJoinQrPayload(raw: string): ParsedJoinQr | null {
 
   // Format 2: JSON { ws, room }
   try {
-    const parsed = JSON.parse(text) as { ws?: string; room?: string };
-    if (parsed.ws && parsed.room) {
+    const parsed = JSON.parse(text) as { ws?: unknown; room?: unknown };
+    const room = canonicalizeRoomCode(parsed?.room);
+    if (typeof parsed?.ws === 'string' && room) {
       const normalized = normalizeServerUrl(parsed.ws);
+      if (!isAllowedRealtimeWsUrl(normalized, configuredOnlineBase)) {
+        return null;
+      }
       return {
         wsUrl: normalized,
-        roomCode: parsed.room.trim().toUpperCase(),
+        roomCode: room,
         isOnline: isOnlineWsUrl(normalized),
       };
     }

@@ -1,8 +1,28 @@
 import {
   isValidRoomCode,
+  MAX_MESSAGE_BYTES,
   OnlineRoomEngine,
   validateRoundViaAwsApi,
 } from './roomEngine';
+
+const ALLOWED_BROWSER_ORIGINS = new Set<string>([
+  'https://stopmind.cxvone.com',
+  'https://www.stopmind.cxvone.com',
+]);
+
+/**
+ * Module 7.2 — CSWSH protection: native iOS/Android clients omit Origin;
+ * any browser client sending an Origin header must match our strict whitelist.
+ */
+function isAllowedWsOrigin(originHeader: string | null): boolean {
+  if (!originHeader) return true;
+  const origin = originHeader.trim();
+  if (ALLOWED_BROWSER_ORIGINS.has(origin)) return true;
+  if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d{2,5})?$/.test(origin)) {
+    return true;
+  }
+  return false;
+}
 
 export interface Env {
   ROOMS: DurableObjectNamespace;
@@ -88,6 +108,13 @@ export class StopMindRoomDO implements DurableObject {
   }
 
   async fetch(request: Request): Promise<Response> {
+    if (!isAllowedWsOrigin(request.headers.get('Origin'))) {
+      return new Response(
+        JSON.stringify({ error: 'Origin not allowed' }),
+        { status: 403, headers: SECURITY_HEADERS }
+      );
+    }
+
     const upgradeHeader = request.headers.get('Upgrade');
     if (!upgradeHeader || upgradeHeader.toLowerCase() !== 'websocket') {
       return new Response(
@@ -116,6 +143,19 @@ export class StopMindRoomDO implements DurableObject {
 
     server.addEventListener('message', (event) => {
       if (typeof event.data === 'string') {
+        if (event.data.length > MAX_MESSAGE_BYTES) {
+          try {
+            server.send(
+              JSON.stringify({
+                type: 'error',
+                message: 'Mensaje demasiado grande.',
+              })
+            );
+          } catch {
+            // ignore closed socket
+          }
+          return;
+        }
         engine.handleMessage(clientId, event.data);
       }
     });
