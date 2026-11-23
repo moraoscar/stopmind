@@ -11,6 +11,7 @@ import {
   isPrivateLanHost,
   isValidRoomSnapshot,
   isValidRoundResults,
+  parseStrictUrl,
   reportSafeError,
   sanitizeDisplayText,
   sanitizeIncomingAnswers,
@@ -128,6 +129,46 @@ test('Module 1.2 & 3.2 — isAllowedInviteLinkUrl allows only official scheme/do
     isAllowedInviteLinkUrl('http://stopmind.cxvone.com/join?room=ABCD'),
     false
   );
+});
+
+test('React Native Hermes compatibility — URL security checks never depend on globalThis.URL', () => {
+  const originalURL = globalThis.URL;
+  // Simulate React Native's built-in URL polyfill failing on non-http(s) schemes
+  (globalThis as unknown as { URL: unknown }).URL = function BrokenRnUrl() {
+    throw new Error('Should not call globalThis.URL');
+  };
+  try {
+    const officialOnline = 'wss://stopmind-realtime.stopmind.workers.dev';
+    assert.deepEqual(parseStrictUrl(`${officialOnline}/room/ABCD`), {
+      protocol: 'wss:',
+      hasCredentials: false,
+      hostname: 'stopmind-realtime.stopmind.workers.dev',
+      port: '',
+      pathname: '/room/ABCD',
+    });
+    assert.equal(
+      isAllowedRealtimeWsUrl(`${officialOnline}/room/ABCD`, officialOnline),
+      true
+    );
+    assert.equal(
+      isAllowedRealtimeWsUrl('ws://192.168.1.25:3001', officialOnline),
+      true
+    );
+    assert.equal(
+      isAllowedInviteLinkUrl('stopmind://join?room=ABCD&ws=ws%3A%2F%2F192.168.1.25%3A3001'),
+      true
+    );
+    assert.equal(
+      isAllowedInviteLinkUrl('https://stopmind.cxvone.com/join?room=ABCD'),
+      true
+    );
+    assert.equal(
+      isAllowedApiBaseUrl('https://fhkmc2g834.execute-api.us-east-1.amazonaws.com/prod'),
+      true
+    );
+  } finally {
+    globalThis.URL = originalURL;
+  }
 });
 
 test('Module 1.2 & 7.2 — sanitizeIncomingAnswers filters unknown keys, control chars, and prototype pollution', () => {

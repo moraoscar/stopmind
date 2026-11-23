@@ -122,12 +122,100 @@ export function isPrivateLanHost(hostname: string): boolean {
   return false;
 }
 
-function extractHost(rawUrl: string): string {
-  try {
-    return new URL(rawUrl).hostname.toLowerCase();
-  } catch {
-    return '';
+interface ParsedUrlParts {
+  protocol: string;
+  hasCredentials: boolean;
+  hostname: string;
+  port: string;
+  pathname: string;
+}
+
+/**
+ * Runtime-independent strict URL parser (Hermes/React Native's built-in URL polyfill
+ * only parses http:// and https://, returning empty hostname for ws://, wss://, stopmind://).
+ */
+export function parseStrictUrl(raw: string): ParsedUrlParts | null {
+  const trimmed = raw.trim();
+  if (!trimmed || /[\u0000-\u0020\u007F]/.test(trimmed)) return null;
+
+  const schemeMatch = /^([a-zA-Z][a-zA-Z0-9+.-]*):\/\/(.*)$/.exec(trimmed);
+  if (!schemeMatch) return null;
+
+  const protocol = `${schemeMatch[1].toLowerCase()}:`;
+  const rest = schemeMatch[2];
+
+  const delimIdx = rest.search(/[/?#]/);
+  const authority = delimIdx === -1 ? rest : rest.slice(0, delimIdx);
+  const afterAuthority = delimIdx === -1 ? '' : rest.slice(delimIdx);
+
+  const queryOrHashIdx = afterAuthority.search(/[?#]/);
+  const pathname =
+    queryOrHashIdx === -1
+      ? afterAuthority
+      : afterAuthority.slice(0, queryOrHashIdx);
+
+  if (!authority) {
+    // Allow custom scheme with empty authority like stopmind:///join
+    if (protocol === 'stopmind:' && pathname) {
+      return {
+        protocol,
+        hasCredentials: false,
+        hostname: '',
+        port: '',
+        pathname,
+      };
+    }
+    return null;
   }
+
+  if (authority.includes('@')) {
+    return {
+      protocol,
+      hasCredentials: true,
+      hostname: '',
+      port: '',
+      pathname,
+    };
+  }
+
+  let hostname = '';
+  let port = '';
+
+  if (authority.startsWith('[')) {
+    const closeIdx = authority.indexOf(']');
+    if (closeIdx === -1) return null;
+    hostname = authority.slice(1, closeIdx).toLowerCase();
+    const afterBracket = authority.slice(closeIdx + 1);
+    if (afterBracket) {
+      if (!/^:\d+$/.test(afterBracket)) return null;
+      port = afterBracket.slice(1);
+    }
+  } else {
+    const colonIdx = authority.indexOf(':');
+    if (colonIdx !== -1) {
+      if (authority.indexOf(':', colonIdx + 1) !== -1) return null;
+      hostname = authority.slice(0, colonIdx).toLowerCase();
+      port = authority.slice(colonIdx + 1);
+      if (!/^\d+$/.test(port)) return null;
+    } else {
+      hostname = authority.toLowerCase();
+    }
+  }
+
+  if (!hostname) return null;
+
+  return {
+    protocol,
+    hasCredentials: false,
+    hostname,
+    port,
+    pathname,
+  };
+}
+
+function extractHost(rawUrl: string): string {
+  const parsed = parseStrictUrl(rawUrl);
+  return parsed && !parsed.hasCredentials ? parsed.hostname : '';
 }
 
 /**
@@ -143,24 +231,14 @@ export function isAllowedRealtimeWsUrl(
   const trimmed = rawUrl.trim();
   if (!trimmed || trimmed.length > 512) return false;
 
-  let parsed: URL;
-  try {
-    parsed = new URL(trimmed);
-  } catch {
-    return false;
-  }
+  const parsed = parseStrictUrl(trimmed);
+  if (!parsed || parsed.hasCredentials) return false;
 
-  const protocol = parsed.protocol.toLowerCase();
+  const { protocol, hostname, pathname, port } = parsed;
   if (protocol !== 'wss:' && protocol !== 'ws:') {
     return false;
   }
 
-  // Never allow embedded credentials in URLs
-  if (parsed.username || parsed.password) {
-    return false;
-  }
-
-  const hostname = parsed.hostname.toLowerCase();
   if (!hostname) return false;
 
   const allowedCloudHosts = new Set<string>(DEFAULT_ALLOWED_REALTIME_HOSTS);
@@ -173,7 +251,11 @@ export function isAllowedRealtimeWsUrl(
 
   if (protocol === 'wss:') {
     if (allowedCloudHosts.has(hostname)) {
-      return parsed.pathname === '' || parsed.pathname === '/' || /^\/room\/[A-Za-z0-9]{4,8}$/.test(parsed.pathname);
+      return (
+        pathname === '' ||
+        pathname === '/' ||
+        /^\/room\/[A-Za-z0-9]{4,8}$/.test(pathname)
+      );
     }
     return isPrivateLanHost(hostname);
   }
@@ -183,9 +265,9 @@ export function isAllowedRealtimeWsUrl(
     return false;
   }
 
-  if (parsed.port) {
-    const port = Number(parsed.port);
-    if (!Number.isInteger(port) || port < 1024 || port > 65535) {
+  if (port) {
+    const portNum = Number(port);
+    if (!Number.isInteger(portNum) || portNum < 1024 || portNum > 65535) {
       return false;
     }
   }
@@ -200,20 +282,13 @@ export function isAllowedApiBaseUrl(rawUrl: string): boolean {
   const trimmed = rawUrl.trim();
   if (!trimmed || trimmed.length > 512) return false;
 
-  let parsed: URL;
-  try {
-    parsed = new URL(trimmed);
-  } catch {
-    return false;
-  }
+  const parsed = parseStrictUrl(trimmed);
+  if (!parsed || parsed.hasCredentials) return false;
 
-  if (parsed.username || parsed.password) return false;
-
-  const protocol = parsed.protocol.toLowerCase();
-  if (protocol === 'https:') {
+  if (parsed.protocol === 'https:') {
     return Boolean(parsed.hostname);
   }
-  if (protocol === 'http:') {
+  if (parsed.protocol === 'http:') {
     return isPrivateLanHost(parsed.hostname);
   }
   return false;
@@ -226,21 +301,16 @@ export function isAllowedInviteLinkUrl(rawUrl: string): boolean {
   const trimmed = rawUrl.trim();
   if (!trimmed || trimmed.length > 1024) return false;
 
-  let parsed: URL;
-  try {
-    parsed = new URL(trimmed);
-  } catch {
-    return false;
-  }
+  const parsed = parseStrictUrl(trimmed);
+  if (!parsed || parsed.hasCredentials) return false;
 
-  const protocol = parsed.protocol.toLowerCase();
-  if (protocol === 'stopmind:') {
+  if (parsed.protocol === 'stopmind:') {
     const target = `${parsed.hostname}${parsed.pathname}`.toLowerCase();
     return target === 'join' || target === 'join/' || target === '/join';
   }
-  if (protocol === 'https:') {
+  if (parsed.protocol === 'https:') {
     return (
-      ALLOWED_INVITE_WEB_HOSTS.has(parsed.hostname.toLowerCase()) &&
+      ALLOWED_INVITE_WEB_HOSTS.has(parsed.hostname) &&
       (parsed.pathname === '/join' || parsed.pathname === '/join/')
     );
   }

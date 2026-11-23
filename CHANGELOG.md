@@ -44,6 +44,7 @@ Todos los cambios relevantes del proyecto se documentan en este archivo siguiend
   - Adquisición y liberación automática de `WifiManager.MulticastLock` en `LanServerModule.kt` para descubrimiento confiable `_stopmind._tcp.` entre dispositivos Android y iOS.
 
 ### Corregido
+- **Creación/unión de salas Online y enlaces `stopmind://` en iOS/Android (`apps/mobile/src/utils/security.ts`)**: sustituido `new URL()` por `parseStrictUrl()` independiente del polyfill `URL` de React Native (que solo reconoce `http://`/`https://` y devolvía `hostname` vacío para `wss://`, `ws://` y `stopmind://`).
 - **Detección de respuestas repetidas (`packages/shared/src/scoring.ts`)**: corregidos falsos positivos por similitud laxa de 1–2 letras entre palabras, nombres o apellidos distintos (ej. *Frías* vs *Farías*, *María* vs *Mario*, *Daniel* vs *Daniela*, *Perro* vs *Pero*), conservando la detección exacta por tildes, equivalentes fonéticos en español (*Gómez*/*Gomes*, *Jirafa*/*Girafa*) y trasposiciones accidentales en palabras largas.
 
 ### Seguridad y Resiliencia
