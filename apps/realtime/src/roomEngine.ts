@@ -1,5 +1,6 @@
 import {
   ApiValidateRoundResponse,
+  buildRankedLeaderboard,
   collectWordsForAiValidation,
   DEFAULT_CONFIG,
   GameConfig,
@@ -75,6 +76,7 @@ export class OnlineRoomEngine {
   private finalizing = false;
   private stopReason: 'stop' | 'timeout' | null = null;
   private stoppedByName: string | null = null;
+  private stoppedByPlayerId: string | null = null;
 
   constructor(roomCode: string, transport: RoomTransport) {
     this.roomCode = roomCode.trim().toUpperCase();
@@ -183,6 +185,7 @@ export class OnlineRoomEngine {
     this.finalizing = false;
     this.stopReason = null;
     this.stoppedByName = null;
+    this.stoppedByPlayerId = null;
   }
 
   private handleCreateRoom(clientId: string, msg: Record<string, unknown>): void {
@@ -329,6 +332,7 @@ export class OnlineRoomEngine {
     this.finalizing = false;
     this.stopReason = null;
     this.stoppedByName = null;
+    this.stoppedByPlayerId = null;
 
     for (const p of this.players.values()) {
       p.filledCount = 0;
@@ -454,6 +458,7 @@ export class OnlineRoomEngine {
     this.stopTriggered = true;
     this.stopReason = params.reason;
     this.stoppedByName = params.stoppedByName;
+    this.stoppedByPlayerId = params.stoppedByPlayerId;
     this.phase = 'scoring';
     this.transport.clearTimer('round');
 
@@ -537,8 +542,9 @@ export class OnlineRoomEngine {
     this.phase = isFinalRound ? 'finished' : 'results';
     this.finalizing = false;
 
-    const leaderboard = [...this.players.values()]
-      .map((p) => ({
+    const stopReason = this.stopReason ?? 'timeout';
+    const leaderboard = buildRankedLeaderboard({
+      entries: [...this.players.values()].map((p) => ({
         playerId: p.id,
         playerName: p.name,
         roundScore: roundScores[p.id] ?? 0,
@@ -546,15 +552,18 @@ export class OnlineRoomEngine {
         hintsUsed: this.roundHintsUsed[p.id] ?? 0,
         hintPenalty: hintPenalties[p.id] ?? 0,
         isHost: p.id === this.hostId,
-      }))
-      .sort((a, b) => b.totalScore - a.totalScore || b.roundScore - a.roundScore);
+      })),
+      stopReason,
+      stoppedByPlayerId: this.stoppedByPlayerId,
+    });
 
     const results: RoundResults = {
       roundNumber: this.currentRound,
       totalRounds: this.config.totalRounds,
       letter: this.currentLetter,
-      stopReason: this.stopReason ?? 'timeout',
+      stopReason,
       stoppedByName: this.stoppedByName,
+      stoppedByPlayerId: this.stoppedByPlayerId,
       categoryResults,
       roundScores,
       leaderboard,

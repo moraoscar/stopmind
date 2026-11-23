@@ -1,4 +1,9 @@
-import { CategoryResult, CategoryScoreEntry, ScoreReason } from './types';
+import {
+  CategoryResult,
+  CategoryScoreEntry,
+  LeaderboardEntry,
+  ScoreReason,
+} from './types';
 import { canonicalizeInput, validateWordLocally } from './wordValidator';
 
 export function normalizeWord(raw: string): string {
@@ -310,4 +315,76 @@ export function scoreRoundLocal(params: {
   }
 
   return { categoryResults, roundScores, hintPenalties };
+}
+
+export interface LeaderboardRankInput {
+  playerId: string;
+  playerName: string;
+  roundScore: number;
+  totalScore: number;
+  hintsUsed?: number;
+  hintPenalty?: number;
+  isHost: boolean;
+}
+
+/**
+ * Builds a fair leaderboard using Standard Competition Ranking (1, 1, 3, 4...):
+ * 1. Higher `totalScore` always ranks higher.
+ * 2. If two or more players have the exact same `totalScore`, whoever pressed STOP
+ *    in this round wins the tiebreak and ranks ahead of the other tied players.
+ * 3. Players with the exact same `totalScore` where none pressed STOP share the
+ *    exact same `rank`, and the next distinct rank skips accordingly (e.g. 1, 1, 3).
+ * Host status NEVER influences tiebreaks.
+ */
+export function buildRankedLeaderboard(params: {
+  entries: LeaderboardRankInput[];
+  stopReason: 'stop' | 'timeout';
+  stoppedByPlayerId: string | null;
+}): LeaderboardEntry[] {
+  const { entries, stopReason, stoppedByPlayerId } = params;
+  const activeStopperId =
+    stopReason === 'stop' && stoppedByPlayerId ? stoppedByPlayerId : null;
+
+  // Count how many players share each totalScore to detect real STOP tiebreaks
+  const scoreCounts = new Map<number, number>();
+  for (const e of entries) {
+    scoreCounts.set(e.totalScore, (scoreCounts.get(e.totalScore) ?? 0) + 1);
+  }
+
+  const enriched: LeaderboardEntry[] = entries.map((e) => {
+    const stoppedRound = Boolean(activeStopperId && e.playerId === activeStopperId);
+    const hasScoreTie = (scoreCounts.get(e.totalScore) ?? 0) > 1;
+    return {
+      ...e,
+      stoppedRound,
+      wonTiebreak: stoppedRound && hasScoreTie,
+    };
+  });
+
+  enriched.sort((a, b) => {
+    if (b.totalScore !== a.totalScore) {
+      return b.totalScore - a.totalScore;
+    }
+    const stopA = a.stoppedRound ? 1 : 0;
+    const stopB = b.stoppedRound ? 1 : 0;
+    if (stopB !== stopA) {
+      return stopB - stopA;
+    }
+    return a.playerName.localeCompare(b.playerName, 'es', { sensitivity: 'base' });
+  });
+
+  for (let i = 0; i < enriched.length; i++) {
+    if (i === 0) {
+      enriched[i].rank = 1;
+    } else {
+      const prev = enriched[i - 1];
+      const curr = enriched[i];
+      const isTiedWithPrev =
+        curr.totalScore === prev.totalScore &&
+        Boolean(curr.stoppedRound) === Boolean(prev.stoppedRound);
+      curr.rank = isTiedWithPrev ? prev.rank : i + 1;
+    }
+  }
+
+  return enriched;
 }

@@ -68,6 +68,12 @@ export interface LeaderboardEntry {
   hintsUsed?: number;
   hintPenalty?: number;
   isHost: boolean;
+  /** Standard Competition Ranking position (1, 1, 3, 4...) */
+  rank?: number;
+  /** True when this player pressed STOP to end the round */
+  stoppedRound?: boolean;
+  /** True when this player broke a points tie specifically by pressing STOP */
+  wonTiebreak?: boolean;
 }
 
 export interface RoundResults {
@@ -76,6 +82,7 @@ export interface RoundResults {
   letter: string;
   stopReason: 'stop' | 'timeout';
   stoppedByName: string | null;
+  stoppedByPlayerId?: string | null;
   categoryResults: CategoryResult[];
   roundScores: Record<string, number>;
   leaderboard: LeaderboardEntry[];

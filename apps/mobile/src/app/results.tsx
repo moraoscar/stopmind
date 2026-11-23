@@ -75,8 +75,19 @@ export default function ResultsScreen() {
 
   const myRoundScore = myLeaderboardEntry?.roundScore ?? 0;
   const myTotalScore = myLeaderboardEntry?.totalScore ?? 0;
-  const winner = roundResults.leaderboard[0];
   const isMultiplayer = roundResults.leaderboard.length > 1;
+
+  // Compute Standard Competition Ranking counts so ties and skipped ranks display accurately
+  const rankCounts = new Map<number, number>();
+  roundResults.leaderboard.forEach((entry, idx) => {
+    const r = entry.rank ?? idx + 1;
+    rankCounts.set(r, (rankCounts.get(r) ?? 0) + 1);
+  });
+  const winners = roundResults.leaderboard.filter(
+    (entry, idx) => (entry.rank ?? idx + 1) === 1
+  );
+  const isFirstPlaceTie = winners.length > 1;
+  const primaryWinner = winners[0];
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -108,14 +119,28 @@ export default function ResultsScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Final Winner Celebration */}
-        {roundResults.isFinalRound && winner && (
+        {roundResults.isFinalRound && primaryWinner && (
           <View style={styles.winnerBanner}>
             <Ionicons name="trophy" size={34} color="#FDE047" />
             <Text style={styles.winnerEyebrow}>
-              {isMultiplayer ? 'GANADOR DE LA PARTIDA' : 'PARTIDA COMPLETADA'}
+              {!isMultiplayer
+                ? 'PARTIDA COMPLETADA'
+                : isFirstPlaceTie
+                  ? 'EMPATE EN PRIMER LUGAR'
+                  : 'GANADOR DE LA PARTIDA'}
             </Text>
-            <Text style={styles.winnerName}>{winner.playerName}</Text>
-            <Text style={styles.winnerPoints}>{winner.totalScore} puntos</Text>
+            <Text style={styles.winnerName}>
+              {isFirstPlaceTie
+                ? winners.map((w) => w.playerName).join(' · ')
+                : primaryWinner.playerName}
+            </Text>
+            <Text style={styles.winnerPoints}>
+              {isFirstPlaceTie
+                ? `${primaryWinner.totalScore} puntos cada uno`
+                : `${primaryWinner.totalScore} puntos${
+                    primaryWinner.wonTiebreak ? ' · ⚡ Desempate STOP' : ''
+                  }`}
+            </Text>
           </View>
         )}
 
@@ -150,6 +175,8 @@ export default function ResultsScreen() {
             </View>
             {roundResults.leaderboard.map((entry, idx) => {
               const isMe = entry.playerId === playerId;
+              const rank = entry.rank ?? idx + 1;
+              const isRankTied = (rankCounts.get(rank) ?? 0) > 1;
               return (
                 <View
                   key={entry.playerId}
@@ -158,18 +185,18 @@ export default function ResultsScreen() {
                   <View
                     style={[
                       styles.rankNum,
-                      idx === 0 && styles.rankFirst,
-                      idx === 1 && styles.rankSecond,
-                      idx === 2 && styles.rankThird,
+                      rank === 1 && styles.rankFirst,
+                      rank === 2 && styles.rankSecond,
+                      rank === 3 && styles.rankThird,
                     ]}
                   >
                     <Text
                       style={[
                         styles.rankNumText,
-                        idx < 3 && styles.rankNumTextMedal,
+                        rank <= 3 && styles.rankNumTextMedal,
                       ]}
                     >
-                      {idx + 1}
+                      {rank}
                     </Text>
                   </View>
                   <View style={styles.rankInfo}>
@@ -182,6 +209,8 @@ export default function ResultsScreen() {
                       {(entry.hintPenalty ?? 0) > 0
                         ? ` (💡 −${entry.hintPenalty} pts)`
                         : ''}
+                      {entry.wonTiebreak ? ' · ⚡ Desempate STOP' : ''}
+                      {!entry.wonTiebreak && isRankTied ? ' · Empate' : ''}
                     </Text>
                   </View>
                   <Text style={styles.rankTotal}>{entry.totalScore} pts</Text>

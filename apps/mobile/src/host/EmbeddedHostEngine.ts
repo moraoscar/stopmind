@@ -4,6 +4,7 @@ import {
   LanServerStartResult,
 } from '../../modules/lan-server';
 import {
+  buildRankedLeaderboard,
   collectWordsForAiValidation,
   DEFAULT_SERVER_PORT,
   GameConfig,
@@ -89,6 +90,7 @@ export class EmbeddedHostEngine {
   private finalizing = false;
   private stopReason: 'stop' | 'timeout' | null = null;
   private stoppedByName: string | null = null;
+  private stoppedByPlayerId: string | null = null;
 
   private roundTimer: ReturnType<typeof setTimeout> | null = null;
   private finalizeTimer: ReturnType<typeof setTimeout> | null = null;
@@ -286,6 +288,7 @@ export class EmbeddedHostEngine {
     this.finalizing = false;
     this.stopReason = null;
     this.stoppedByName = null;
+    this.stoppedByPlayerId = null;
 
     for (const p of this.players.values()) {
       p.filledCount = 0;
@@ -332,6 +335,7 @@ export class EmbeddedHostEngine {
     this.stopTriggered = true;
     this.stopReason = params.reason;
     this.stoppedByName = params.stoppedByName;
+    this.stoppedByPlayerId = params.stoppedByPlayerId;
     this.phase = 'scoring';
 
     if (this.roundTimer) {
@@ -419,8 +423,9 @@ export class EmbeddedHostEngine {
     this.phase = isFinalRound ? 'finished' : 'results';
     this.finalizing = false;
 
-    const leaderboard = [...this.players.values()]
-      .map((p) => ({
+    const stopReason = this.stopReason ?? 'timeout';
+    const leaderboard = buildRankedLeaderboard({
+      entries: [...this.players.values()].map((p) => ({
         playerId: p.id,
         playerName: p.name,
         roundScore: roundScores[p.id] ?? 0,
@@ -428,15 +433,18 @@ export class EmbeddedHostEngine {
         hintsUsed: this.roundHintsUsed[p.id] ?? 0,
         hintPenalty: hintPenalties[p.id] ?? 0,
         isHost: p.id === this.hostId,
-      }))
-      .sort((a, b) => b.totalScore - a.totalScore || b.roundScore - a.roundScore);
+      })),
+      stopReason,
+      stoppedByPlayerId: this.stoppedByPlayerId,
+    });
 
     const results: RoundResults = {
       roundNumber: this.currentRound,
       totalRounds: this.config.totalRounds,
       letter: this.currentLetter,
-      stopReason: this.stopReason ?? 'timeout',
+      stopReason,
       stoppedByName: this.stoppedByName,
+      stoppedByPlayerId: this.stoppedByPlayerId,
       categoryResults,
       roundScores,
       leaderboard,

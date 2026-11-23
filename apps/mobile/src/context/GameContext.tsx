@@ -842,6 +842,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       letter: localLetterRef.current,
       stopReason: reason,
       stoppedByName: reason === 'stop' ? safeName : null,
+      stoppedByPlayerId: reason === 'stop' ? pId : null,
       categoryResults,
       roundScores,
       leaderboard: [
@@ -853,6 +854,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           hintsUsed: hintsUsedRef.current,
           hintPenalty: hintPenalties[pId] ?? 0,
           isHost: true,
+          rank: 1,
+          stoppedRound: reason === 'stop',
+          wonTiebreak: false,
         },
       ],
       isFinalRound,

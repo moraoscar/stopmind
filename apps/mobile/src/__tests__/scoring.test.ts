@@ -1,6 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { areWordsSimilar, scoreRoundLocal } from '@stopmind/shared';
+import {
+  areWordsSimilar,
+  buildRankedLeaderboard,
+  scoreRoundLocal,
+} from '@stopmind/shared';
 
 test('Distinct Spanish surnames, names, and words are NEVER marked as duplicates', () => {
   const distinctPairs: [string, string][] = [
@@ -74,4 +78,95 @@ test('scoreRoundLocal awards 100 pts each for Frias and Farias under Apellido (F
   assert.equal(roundScores.p2, 100);
   assert.equal(categoryResults[0]?.entries[0]?.reason, 'unique');
   assert.equal(categoryResults[0]?.entries[1]?.reason, 'unique');
+});
+
+test('buildRankedLeaderboard — 2-player tie: whoever pressed STOP wins #1 even if NOT host', () => {
+  const board = buildRankedLeaderboard({
+    entries: [
+      { playerId: 'host', playerName: 'Anfitrión', roundScore: 300, totalScore: 300, isHost: true },
+      { playerId: 'guest', playerName: 'Invitado', roundScore: 300, totalScore: 300, isHost: false },
+    ],
+    stopReason: 'stop',
+    stoppedByPlayerId: 'guest',
+  });
+
+  assert.equal(board[0]?.playerId, 'guest');
+  assert.equal(board[0]?.rank, 1);
+  assert.equal(board[0]?.wonTiebreak, true);
+  assert.equal(board[1]?.playerId, 'host');
+  assert.equal(board[1]?.rank, 2);
+  assert.equal(board[1]?.wonTiebreak, false);
+});
+
+test('buildRankedLeaderboard — 2-player tie on timeout: both tie at #1 (no #2)', () => {
+  const board = buildRankedLeaderboard({
+    entries: [
+      { playerId: 'p1', playerName: 'Oscar', roundScore: 300, totalScore: 300, isHost: true },
+      { playerId: 'p2', playerName: 'Ana', roundScore: 300, totalScore: 300, isHost: false },
+    ],
+    stopReason: 'timeout',
+    stoppedByPlayerId: null,
+  });
+
+  assert.equal(board[0]?.rank, 1);
+  assert.equal(board[1]?.rank, 1);
+  assert.equal(board[0]?.wonTiebreak, false);
+  assert.equal(board[1]?.wonTiebreak, false);
+});
+
+test('buildRankedLeaderboard — 3 players: P1 & P2 tied at #1, P3 (who pressed STOP with fewer pts) gets #3', () => {
+  const board = buildRankedLeaderboard({
+    entries: [
+      { playerId: 'p1', playerName: 'Jugador 1', roundScore: 300, totalScore: 300, isHost: true },
+      { playerId: 'p2', playerName: 'Jugador 2', roundScore: 300, totalScore: 300, isHost: false },
+      { playerId: 'p3', playerName: 'Jugador 3', roundScore: 200, totalScore: 200, isHost: false },
+    ],
+    stopReason: 'stop',
+    stoppedByPlayerId: 'p3',
+  });
+
+  const byId = Object.fromEntries(board.map((b) => [b.playerId, b]));
+  assert.equal(byId.p1.rank, 1);
+  assert.equal(byId.p2.rank, 1);
+  assert.equal(byId.p3.rank, 3);
+  assert.equal(byId.p3.wonTiebreak, false);
+});
+
+test('buildRankedLeaderboard — 4 players: P1 & P2 tied #1, P3 & P4 tied at 200 pts where P4 pressed STOP -> P4=#3, P3=#4', () => {
+  const board = buildRankedLeaderboard({
+    entries: [
+      { playerId: 'p1', playerName: 'Jugador 1', roundScore: 400, totalScore: 400, isHost: true },
+      { playerId: 'p2', playerName: 'Jugador 2', roundScore: 400, totalScore: 400, isHost: false },
+      { playerId: 'p3', playerName: 'Jugador 3', roundScore: 200, totalScore: 200, isHost: false },
+      { playerId: 'p4', playerName: 'Jugador 4', roundScore: 200, totalScore: 200, isHost: false },
+    ],
+    stopReason: 'stop',
+    stoppedByPlayerId: 'p4',
+  });
+
+  const byId = Object.fromEntries(board.map((b) => [b.playerId, b]));
+  assert.equal(byId.p1.rank, 1);
+  assert.equal(byId.p2.rank, 1);
+  assert.equal(byId.p4.rank, 3);
+  assert.equal(byId.p4.wonTiebreak, true);
+  assert.equal(byId.p3.rank, 4);
+  assert.equal(byId.p3.wonTiebreak, false);
+});
+
+test('buildRankedLeaderboard — 3 players all tied at 300 pts where P3 pressed STOP -> P3=#1, P1=#2, P2=#2', () => {
+  const board = buildRankedLeaderboard({
+    entries: [
+      { playerId: 'p1', playerName: 'Jugador 1', roundScore: 300, totalScore: 300, isHost: true },
+      { playerId: 'p2', playerName: 'Jugador 2', roundScore: 300, totalScore: 300, isHost: false },
+      { playerId: 'p3', playerName: 'Jugador 3', roundScore: 300, totalScore: 300, isHost: false },
+    ],
+    stopReason: 'stop',
+    stoppedByPlayerId: 'p3',
+  });
+
+  const byId = Object.fromEntries(board.map((b) => [b.playerId, b]));
+  assert.equal(byId.p3.rank, 1);
+  assert.equal(byId.p3.wonTiebreak, true);
+  assert.equal(byId.p1.rank, 2);
+  assert.equal(byId.p2.rank, 2);
 });
