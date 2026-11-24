@@ -16,9 +16,24 @@ import {
 export const MAX_PLAYERS_PER_ROOM = 16;
 export const MAX_MESSAGE_BYTES = 16 * 1024;
 const ROOM_CODE_REGEX = /^[A-Z0-9]{4,6}$/;
+const AVATAR_ID_REGEX = /^[a-z0-9_]{2,24}$/;
 
 export function isValidRoomCode(code: string): boolean {
   return ROOM_CODE_REGEX.test(code);
+}
+
+export function sanitizeAvatarId(raw: unknown): string | undefined {
+  if (typeof raw !== 'string') return undefined;
+  const cleaned = raw.replace(/[\u0000-\u001F\u007F]/g, '').trim().toLowerCase();
+  return AVATAR_ID_REGEX.test(cleaned) ? cleaned : undefined;
+}
+
+const AVATAR_BG_REGEX = /^[a-z0-9_]{2,16}$/;
+
+export function sanitizeAvatarBg(raw: unknown): string | undefined {
+  if (typeof raw !== 'string') return undefined;
+  const cleaned = raw.replace(/[\u0000-\u001F\u007F]/g, '').trim().toLowerCase();
+  return AVATAR_BG_REGEX.test(cleaned) ? cleaned : undefined;
 }
 
 export function sanitizePlayerName(raw: unknown, fallback = 'Jugador'): string {
@@ -46,6 +61,8 @@ export interface RoomTransport {
 interface InternalPlayer {
   id: string;
   name: string;
+  avatarId?: string;
+  avatarBg?: string;
   totalScore: number;
   filledCount: number;
 }
@@ -77,6 +94,7 @@ export class OnlineRoomEngine {
   private stopReason: 'stop' | 'timeout' | null = null;
   private stoppedByName: string | null = null;
   private stoppedByPlayerId: string | null = null;
+  private lastRoundResults: RoundResults | null = null;
 
   constructor(roomCode: string, transport: RoomTransport) {
     this.roomCode = roomCode.trim().toUpperCase();
@@ -132,6 +150,9 @@ export class OnlineRoomEngine {
       case 'next_round':
         this.handleNextRound(clientId);
         break;
+      case 'finish_game':
+        this.handleFinishGame(clientId);
+        break;
       case 'play_again':
         this.handlePlayAgain(clientId);
         break;
@@ -186,6 +207,7 @@ export class OnlineRoomEngine {
     this.stopReason = null;
     this.stoppedByName = null;
     this.stoppedByPlayerId = null;
+    this.lastRoundResults = null;
   }
 
   private handleCreateRoom(clientId: string, msg: Record<string, unknown>): void {
@@ -198,6 +220,8 @@ export class OnlineRoomEngine {
     }
 
     const name = sanitizePlayerName(msg.playerName, 'Anfitrión');
+    const avatarId = sanitizeAvatarId(msg.avatarId);
+    const avatarBg = sanitizeAvatarBg(msg.avatarBg);
     if (msg.config && typeof msg.config === 'object') {
       this.config = sanitizeConfig(msg.config as Partial<GameConfig>);
     }
@@ -208,6 +232,8 @@ export class OnlineRoomEngine {
     this.players.set(clientId, {
       id: clientId,
       name,
+      avatarId,
+      avatarBg,
       totalScore: 0,
       filledCount: 0,
     });
@@ -259,10 +285,14 @@ export class OnlineRoomEngine {
     }
 
     const name = sanitizePlayerName(msg.playerName, 'Jugador');
+    const avatarId = sanitizeAvatarId(msg.avatarId);
+    const avatarBg = sanitizeAvatarBg(msg.avatarBg);
     const existing = this.players.get(clientId);
     this.players.set(clientId, {
       id: clientId,
       name,
+      avatarId: avatarId ?? existing?.avatarId,
+      avatarBg: avatarBg ?? existing?.avatarBg,
       totalScore: existing?.totalScore ?? 0,
       filledCount: existing?.filledCount ?? 0,
     });
@@ -289,6 +319,7 @@ export class OnlineRoomEngine {
       this.config = sanitizeConfig(msg.config as Partial<GameConfig>);
     }
     this.currentRound = 0;
+    this.lastRoundResults = null;
     for (const p of this.players.values()) {
       p.totalScore = 0;
       p.filledCount = 0;
@@ -303,6 +334,60 @@ export class OnlineRoomEngine {
     this.startRound();
   }
 
+  private handleFinishGame(clientId: string): void {
+    if (clientId !== this.hostId) return;
+    if (this.phase !== 'results' && this.phase !== 'playing') return;
+
+    this.transport.clearTimer('round');
+    this.transport.clearTimer('finalize');
+    this.phase = 'finished';
+    this.roundEndsAt = null;
+    this.stopTriggered = true;
+    this.finalizing = false;
+
+    const finalResults: RoundResults = this.lastRoundResults
+      ? {
+          ...this.lastRoundResults,
+          isFinalRound: true,
+        }
+      : {
+          roundNumber: Math.max(1, this.currentRound),
+          totalRounds: this.config.totalRounds,
+          letter: this.currentLetter || '—',
+          stopReason: 'timeout',
+          stoppedByName: null,
+          stoppedByPlayerId: null,
+          categoryResults: [],
+          roundScores: Object.fromEntries(
+            [...this.players.values()].map((p) => [p.id, 0])
+          ),
+          leaderboard: buildRankedLeaderboard({
+            entries: [...this.players.values()].map((p) => ({
+              playerId: p.id,
+              playerName: p.name,
+              ...(p.avatarId ? { avatarId: p.avatarId } : {}),
+              ...(p.avatarBg ? { avatarBg: p.avatarBg } : {}),
+              roundScore: 0,
+              totalScore: p.totalScore,
+              hintsUsed: 0,
+              hintPenalty: 0,
+              isHost: p.id === this.hostId,
+            })),
+            stopReason: 'timeout',
+            stoppedByPlayerId: null,
+          }),
+          isFinalRound: true,
+          validatedBy: 'local',
+        };
+
+    this.lastRoundResults = finalResults;
+    this.emitRoomState();
+    this.transport.broadcast({
+      type: 'round_results',
+      results: finalResults,
+    });
+  }
+
   private handlePlayAgain(clientId: string): void {
     if (clientId !== this.hostId) return;
     this.transport.clearTimer('round');
@@ -310,6 +395,7 @@ export class OnlineRoomEngine {
     this.phase = 'lobby';
     this.currentRound = 0;
     this.currentLetter = '';
+    this.lastRoundResults = null;
     this.roundEndsAt = null;
     for (const p of this.players.values()) {
       p.totalScore = 0;
@@ -547,6 +633,8 @@ export class OnlineRoomEngine {
       entries: [...this.players.values()].map((p) => ({
         playerId: p.id,
         playerName: p.name,
+        ...(p.avatarId ? { avatarId: p.avatarId } : {}),
+        ...(p.avatarBg ? { avatarBg: p.avatarBg } : {}),
         roundScore: roundScores[p.id] ?? 0,
         totalScore: p.totalScore,
         hintsUsed: this.roundHintsUsed[p.id] ?? 0,
@@ -571,6 +659,7 @@ export class OnlineRoomEngine {
       validatedBy: usedAi ? 'gemini' : 'local',
     };
 
+    this.lastRoundResults = results;
     this.emitRoomState();
     this.transport.broadcast({
       type: 'round_results',
@@ -593,6 +682,8 @@ export class OnlineRoomEngine {
       players: [...this.players.values()].map((p) => ({
         id: p.id,
         name: p.name,
+        ...(p.avatarId ? { avatarId: p.avatarId } : {}),
+        ...(p.avatarBg ? { avatarBg: p.avatarBg } : {}),
         isHost: p.id === this.hostId,
         totalScore: p.totalScore,
         filledCount: p.filledCount,

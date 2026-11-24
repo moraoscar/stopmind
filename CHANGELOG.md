@@ -11,6 +11,14 @@ Todos los cambios relevantes del proyecto se documentan en este archivo siguiend
 
 ## [Unreleased]
 
+### Agregado
+- **Avatares inclusivos sin fondo + selector de color de fondo personalizable (`apps/mobile/assets/avatars/`, `AvatarPickerModal`, `PlayerAvatar`, `playerStorage.ts`)**:
+  - 16 ilustraciones 3D transparentes incluidas en la app cubriendo niños, niñas, jóvenes, adultos (con y sin barba/bigote), calvos (con y sin barba), mujeres de cabello corto/largo/rizos, abuelos y abuelas con diversidad de tonos de piel, y 12 colores de fondo a elección del jugador.
+  - Guardado 100 % local en el dispositivo junto al apodo, selector con vista previa en vivo en Inicio y Unirse, y sincronización automática de personaje + color en salas **Wi-Fi local**, **Modo Online** y **Resultados / Podio final** (retrocompatible).
+- **Finalizar partida anticipadamente (`GameContext`, `EmbeddedHostEngine`, `OnlineRoomEngine`, `play.tsx`, `results.tsx`)**:
+  - Nueva opción **Finalizar partida** (con confirmación) disponible entre rondas en la pantalla de resultados y en la barra superior durante una ronda activa, compatible con **Solo**, **Wi-Fi local** y **Modo Online**.
+  - Cierra la partida conservando los puntajes acumulados hasta el momento, muestra inmediatamente el **podio y resultados finales** a todos los jugadores y permite elegir entre **JUGAR DE NUEVO** o volver al **Inicio**; además añade botón **Salir** con confirmación para invitados.
+
 ---
 
 ## [1.1.0] - 2026-11-22

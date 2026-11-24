@@ -320,6 +320,8 @@ export function scoreRoundLocal(params: {
 export interface LeaderboardRankInput {
   playerId: string;
   playerName: string;
+  avatarId?: string;
+  avatarBg?: string;
   roundScore: number;
   totalScore: number;
   hintsUsed?: number;

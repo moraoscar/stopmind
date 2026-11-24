@@ -35,7 +35,11 @@ import {
   normalizeServerUrl,
 } from '../utils/network';
 import {
+  loadSavedAvatarBg,
+  loadSavedAvatarId,
   loadSavedPlayerName,
+  savePlayerAvatarBgLocal,
+  savePlayerAvatarLocal,
   savePlayerNameLocal,
 } from '../utils/playerStorage';
 import {
@@ -56,6 +60,10 @@ interface StopBanner {
 interface GameContextValue {
   playerName: string;
   setPlayerName: (name: string) => void;
+  playerAvatar: string;
+  setPlayerAvatar: (avatarId: string) => void;
+  playerAvatarBg: string;
+  setPlayerAvatarBg: (avatarBg: string) => void;
   serverUrl: string;
   setServerUrl: (url: string) => void;
   connectionStatus: ConnectionStatus;
@@ -107,6 +115,7 @@ interface GameContextValue {
   pressStop: () => void;
   triggerLocalTimeout: () => void;
   nextRound: () => void;
+  finishGame: () => void;
   playAgain: () => void;
   leaveGame: () => void;
 }
@@ -131,6 +140,12 @@ function triggerHaptic(type: 'light' | 'success' | 'warning') {
 export function GameProvider({ children }: { children: React.ReactNode }) {
   const [playerName, setPlayerNameState] = useState<string>(() =>
     loadSavedPlayerName()
+  );
+  const [playerAvatar, setPlayerAvatarState] = useState<string>(() =>
+    loadSavedAvatarId()
+  );
+  const [playerAvatarBg, setPlayerAvatarBgState] = useState<string>(() =>
+    loadSavedAvatarBg()
   );
   const [serverUrl, setServerUrlState] = useState<string>(() =>
     getDefaultLanServerUrl()
@@ -162,10 +177,15 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const hintsUsedRef = useRef<number>(0);
   const configRef = useRef<GameConfig>(config);
   const playerNameRef = useRef(playerName);
+  const playerAvatarRef = useRef(playerAvatar);
+  const playerAvatarBgRef = useRef(playerAvatarBg);
   const playerIdRef = useRef<string | null>(null);
   const roomRef = useRef<RoomSnapshot | null>(null);
   const connectionStatusRef = useRef<ConnectionStatus>(connectionStatus);
   const isRoundLockedRef = useRef(false);
+  const stopBannerRef = useRef<StopBanner | null>(null);
+  const roundResultsRef = useRef<RoundResults | null>(null);
+  const onResultsScreenRef = useRef(false);
   const draftTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const resultsNavTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const connectSeqRef = useRef(0);
@@ -183,6 +203,14 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     playerNameRef.current = playerName;
   }, [playerName]);
+
+  useEffect(() => {
+    playerAvatarRef.current = playerAvatar;
+  }, [playerAvatar]);
+
+  useEffect(() => {
+    playerAvatarBgRef.current = playerAvatarBg;
+  }, [playerAvatarBg]);
 
   useEffect(() => {
     playerIdRef.current = playerId;
@@ -207,6 +235,24 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     savePlayerNameLocal(name);
     if (embeddedHostRef.current) {
       embeddedHostRef.current.updateHostName(name);
+    }
+  }, []);
+
+  const setPlayerAvatar = useCallback((avatarId: string) => {
+    setPlayerAvatarState(avatarId);
+    playerAvatarRef.current = avatarId;
+    savePlayerAvatarLocal(avatarId);
+    if (embeddedHostRef.current) {
+      embeddedHostRef.current.updateHostAvatar(avatarId);
+    }
+  }, []);
+
+  const setPlayerAvatarBg = useCallback((avatarBg: string) => {
+    setPlayerAvatarBgState(avatarBg);
+    playerAvatarBgRef.current = avatarBg;
+    savePlayerAvatarBgLocal(avatarBg);
+    if (embeddedHostRef.current) {
+      embeddedHostRef.current.updateHostAvatarBg(avatarBg);
     }
   }, []);
 
@@ -395,8 +441,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
                 (prevPhase === 'results' || prevPhase === 'finished') &&
                 snapshot.phase === 'lobby'
               ) {
+                stopBannerRef.current = null;
                 setStopBanner(null);
                 setIsRoundLocked(false);
+                isRoundLockedRef.current = false;
+                roundResultsRef.current = null;
+                setRoundResults(null);
+                onResultsScreenRef.current = false;
                 if (snapshot.hostId === playerIdRef.current) {
                   router.replace('/setup');
                 } else {
@@ -436,7 +487,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
               setRoundEndsAt(localEndsAt);
               setIsRoundLocked(false);
               isRoundLockedRef.current = false;
+              stopBannerRef.current = null;
               setStopBanner(null);
+              onResultsScreenRef.current = false;
 
               triggerHaptic('light');
               router.replace('/play');
@@ -454,7 +507,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
               setIsRoundLocked(true);
               isRoundLockedRef.current = true;
-              setStopBanner({ reason, stoppedByName });
+              const banner = { reason, stoppedByName };
+              stopBannerRef.current = banner;
+              setStopBanner(banner);
               triggerHaptic('warning');
 
               if (ws.readyState === WebSocket.OPEN) {
@@ -474,17 +529,28 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
                 return;
               }
               const results = msg.results;
+              const alreadyOnResults = onResultsScreenRef.current;
+              const hadStopBanner = stopBannerRef.current !== null;
+              roundResultsRef.current = results;
               setRoundResults(results);
+              setRoundEndsAt(null);
               setIsRoundLocked(true);
               isRoundLockedRef.current = true;
               triggerHaptic('success');
 
-              if (resultsNavTimerRef.current) {
-                clearTimeout(resultsNavTimerRef.current);
+              if (!alreadyOnResults) {
+                onResultsScreenRef.current = true;
+                if (resultsNavTimerRef.current) {
+                  clearTimeout(resultsNavTimerRef.current);
+                }
+                if (!hadStopBanner) {
+                  router.replace('/results');
+                } else {
+                  resultsNavTimerRef.current = setTimeout(() => {
+                    router.replace('/results');
+                  }, 550);
+                }
               }
-              resultsNavTimerRef.current = setTimeout(() => {
-                router.replace('/results');
-              }, 550);
               break;
             }
 
@@ -569,8 +635,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         setConnectionStatus('connecting');
         setErrorMessage(null);
 
-        const engine = new EmbeddedHostEngine(safeName, configRef.current, {
-          onRoomState: (snapshot) => {
+        const engine = new EmbeddedHostEngine(
+          safeName,
+          configRef.current,
+          {
+            onRoomState: (snapshot) => {
             const prevPhase = roomRef.current?.phase;
             setRoom(snapshot);
             setConfig(snapshot.config);
@@ -578,8 +647,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
               (prevPhase === 'results' || prevPhase === 'finished') &&
               snapshot.phase === 'lobby'
             ) {
+              stopBannerRef.current = null;
               setStopBanner(null);
               setIsRoundLocked(false);
+              isRoundLockedRef.current = false;
+              roundResultsRef.current = null;
+              setRoundResults(null);
+              onResultsScreenRef.current = false;
               router.replace('/setup');
             }
           },
@@ -597,29 +671,44 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
             setRoundEndsAt(endsAt);
             setIsRoundLocked(false);
             isRoundLockedRef.current = false;
+            stopBannerRef.current = null;
             setStopBanner(null);
+            onResultsScreenRef.current = false;
             triggerHaptic('light');
             router.replace('/play');
           },
           onForceStop: ({ reason, stoppedByName }) => {
             setIsRoundLocked(true);
             isRoundLockedRef.current = true;
-            setStopBanner({ reason, stoppedByName });
+            const banner = { reason, stoppedByName };
+            stopBannerRef.current = banner;
+            setStopBanner(banner);
             triggerHaptic('warning');
           },
           onRoundResults: (results) => {
+            const alreadyOnResults = onResultsScreenRef.current;
+            const hadStopBanner = stopBannerRef.current !== null;
+            roundResultsRef.current = results;
             setRoundResults(results);
+            setRoundEndsAt(null);
             setIsRoundLocked(true);
             isRoundLockedRef.current = true;
             triggerHaptic('success');
-            if (resultsNavTimerRef.current) {
-              clearTimeout(resultsNavTimerRef.current);
+            if (!alreadyOnResults) {
+              onResultsScreenRef.current = true;
+              if (resultsNavTimerRef.current) {
+                clearTimeout(resultsNavTimerRef.current);
+              }
+              if (!hadStopBanner) {
+                router.replace('/results');
+              } else {
+                resultsNavTimerRef.current = setTimeout(() => {
+                  router.replace('/results');
+                }, 550);
+              }
             }
-            resultsNavTimerRef.current = setTimeout(() => {
-              router.replace('/results');
-            }, 550);
           },
-        });
+        }, playerAvatarRef.current, playerAvatarBgRef.current);
 
         try {
           const {
@@ -648,6 +737,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         {
           type: 'create_room',
           playerName: safeName,
+          avatarId: playerAvatarRef.current,
+          avatarBg: playerAvatarBgRef.current,
           config: configRef.current,
         },
         true
@@ -675,6 +766,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         type: 'create_room',
         roomCode,
         playerName: safeName,
+        avatarId: playerAvatarRef.current,
+        avatarBg: playerAvatarBgRef.current,
         config: configRef.current,
       },
       false
@@ -700,6 +793,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           type: 'join_room',
           roomCode: roomCode.trim().toUpperCase(),
           playerName: safeName,
+          avatarId: playerAvatarRef.current,
+          avatarBg: playerAvatarBgRef.current,
         },
         false
       );
@@ -771,7 +866,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       setRoundEndsAt(Date.now() + cfg.timeLimitSeconds * 1000);
       setIsRoundLocked(false);
       isRoundLockedRef.current = false;
+      stopBannerRef.current = null;
       setStopBanner(null);
+      onResultsScreenRef.current = false;
 
       triggerHaptic('light');
       router.replace('/play');
@@ -785,10 +882,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setIsRoundLocked(true);
 
     const safeName = playerNameRef.current.trim() || 'Jugador';
-    setStopBanner({
+    const banner = {
       reason,
       stoppedByName: reason === 'stop' ? safeName : null,
-    });
+    };
+    stopBannerRef.current = banner;
+    setStopBanner(banner);
     triggerHaptic('warning');
 
     const cfg = configRef.current;
@@ -849,6 +948,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         {
           playerId: pId,
           playerName: safeName,
+          avatarId: playerAvatarRef.current,
+          avatarBg: playerAvatarBgRef.current,
           roundScore: earned,
           totalScore: localTotalScoreRef.current,
           hintsUsed: hintsUsedRef.current,
@@ -863,7 +964,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       validatedBy: usedAi ? 'gemini' : 'local',
     };
 
+    roundResultsRef.current = results;
     setRoundResults(results);
+    setRoundEndsAt(null);
+    onResultsScreenRef.current = true;
     if (resultsNavTimerRef.current) {
       clearTimeout(resultsNavTimerRef.current);
     }
@@ -896,6 +1000,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setConnectionStatus('local');
     setPlayerId('local_player');
     localTotalScoreRef.current = 0;
+    roundResultsRef.current = null;
+    setRoundResults(null);
+    onResultsScreenRef.current = false;
     startLocalRound(1);
   }, [sendWs, startLocalRound]);
 
@@ -1044,6 +1151,74 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     startLocalRound(localRoundRef.current + 1);
   }, [sendWs, startLocalRound]);
 
+  const finishGame = useCallback(() => {
+    if (embeddedHostRef.current) {
+      embeddedHostRef.current.finishGame();
+      return;
+    }
+    if (connectionStatusRef.current === 'connected' && roomRef.current) {
+      sendWs({ type: 'finish_game' });
+      return;
+    }
+
+    // Solo mode early finish: lock active round and display final summary with accumulated points
+    if (resultsNavTimerRef.current) {
+      clearTimeout(resultsNavTimerRef.current);
+      resultsNavTimerRef.current = null;
+    }
+    isRoundLockedRef.current = true;
+    setIsRoundLocked(true);
+    setRoundEndsAt(null);
+    stopBannerRef.current = null;
+    setStopBanner(null);
+
+    const safeName = playerNameRef.current.trim() || 'Jugador';
+    const prevResults = roundResultsRef.current;
+    const finalResults: RoundResults = prevResults
+      ? {
+          ...prevResults,
+          isFinalRound: true,
+        }
+      : {
+          roundNumber: Math.max(1, localRoundRef.current),
+          totalRounds: configRef.current.totalRounds,
+          letter: localLetterRef.current || '—',
+          stopReason: 'timeout',
+          stoppedByName: null,
+          stoppedByPlayerId: null,
+          categoryResults: [],
+          roundScores: { local_player: 0 },
+          leaderboard: [
+            {
+              playerId: 'local_player',
+              playerName: safeName,
+              avatarId: playerAvatarRef.current,
+              avatarBg: playerAvatarBgRef.current,
+              roundScore: 0,
+              totalScore: localTotalScoreRef.current,
+              hintsUsed: 0,
+              hintPenalty: 0,
+              isHost: true,
+              rank: 1,
+              stoppedRound: false,
+              wonTiebreak: false,
+            },
+          ],
+          isFinalRound: true,
+          validatedBy: 'local',
+        };
+
+    const alreadyOnResults = onResultsScreenRef.current;
+    roundResultsRef.current = finalResults;
+    setRoundResults(finalResults);
+    triggerHaptic('success');
+
+    if (!alreadyOnResults) {
+      onResultsScreenRef.current = true;
+      router.replace('/results');
+    }
+  }, [sendWs]);
+
   const playAgain = useCallback(() => {
     if (embeddedHostRef.current) {
       embeddedHostRef.current.playAgain();
@@ -1053,9 +1228,14 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       sendWs({ type: 'play_again' });
       return;
     }
+    stopBannerRef.current = null;
     setStopBanner(null);
     setIsRoundLocked(false);
+    isRoundLockedRef.current = false;
     localTotalScoreRef.current = 0;
+    roundResultsRef.current = null;
+    setRoundResults(null);
+    onResultsScreenRef.current = false;
     router.replace('/setup');
   }, [sendWs]);
 
@@ -1065,9 +1245,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setConnectionStatus('disconnected');
     setRoom(null);
     setPlayerId(null);
+    roundResultsRef.current = null;
     setRoundResults(null);
+    onResultsScreenRef.current = false;
+    stopBannerRef.current = null;
     setStopBanner(null);
     setIsRoundLocked(false);
+    isRoundLockedRef.current = false;
     setAnswers({});
     answersRef.current = {};
     setHintsUsed(0);
@@ -1103,6 +1287,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     () => ({
       playerName,
       setPlayerName,
+      playerAvatar,
+      setPlayerAvatar,
+      playerAvatarBg,
+      setPlayerAvatarBg,
       serverUrl,
       setServerUrl,
       connectionStatus,
@@ -1137,12 +1325,17 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       pressStop,
       triggerLocalTimeout,
       nextRound,
+      finishGame,
       playAgain,
       leaveGame,
     }),
     [
       playerName,
       setPlayerName,
+      playerAvatar,
+      setPlayerAvatar,
+      playerAvatarBg,
+      setPlayerAvatarBg,
       serverUrl,
       setServerUrl,
       connectionStatus,
@@ -1177,6 +1370,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       pressStop,
       triggerLocalTimeout,
       nextRound,
+      finishGame,
       playAgain,
       leaveGame,
     ]

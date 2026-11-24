@@ -21,6 +21,8 @@ import {
   MAX_LAN_MESSAGE_BYTES,
   MAX_LAN_PLAYERS,
   MAX_PLAYER_NAME_LENGTH,
+  sanitizeAvatarBg,
+  sanitizeAvatarId,
   sanitizeDisplayText,
   sanitizeIncomingAnswers,
 } from '../utils/security';
@@ -47,6 +49,8 @@ interface InternalPlayer {
   id: string;
   clientId: string | null; // null = local host phone
   name: string;
+  avatarId?: string;
+  avatarBg?: string;
   totalScore: number;
   filledCount: number;
 }
@@ -91,6 +95,7 @@ export class EmbeddedHostEngine {
   private stopReason: 'stop' | 'timeout' | null = null;
   private stoppedByName: string | null = null;
   private stoppedByPlayerId: string | null = null;
+  private lastRoundResults: RoundResults | null = null;
 
   private roundTimer: ReturnType<typeof setTimeout> | null = null;
   private finalizeTimer: ReturnType<typeof setTimeout> | null = null;
@@ -98,7 +103,9 @@ export class EmbeddedHostEngine {
   constructor(
     hostName: string,
     initialConfig: GameConfig,
-    callbacks: EmbeddedHostCallbacks
+    callbacks: EmbeddedHostCallbacks,
+    hostAvatarId?: string,
+    hostAvatarBg?: string
   ) {
     this.callbacks = callbacks;
     this.config = sanitizeConfig(initialConfig);
@@ -107,6 +114,8 @@ export class EmbeddedHostEngine {
       id: this.hostId,
       clientId: null,
       name: hostName.trim().slice(0, 24) || 'Anfitrión',
+      avatarId: sanitizeAvatarId(hostAvatarId),
+      avatarBg: sanitizeAvatarBg(hostAvatarBg),
       totalScore: 0,
       filledCount: 0,
     });
@@ -161,12 +170,27 @@ export class EmbeddedHostEngine {
     }
     this.players.clear();
     this.clientToPlayerId.clear();
+    this.lastRoundResults = null;
   }
 
   updateHostName(name: string): void {
     const host = this.players.get(this.hostId);
     if (!host) return;
     host.name = name.trim().slice(0, 24) || 'Anfitrión';
+    this.emitRoomState();
+  }
+
+  updateHostAvatar(avatarId: string): void {
+    const host = this.players.get(this.hostId);
+    if (!host) return;
+    host.avatarId = sanitizeAvatarId(avatarId);
+    this.emitRoomState();
+  }
+
+  updateHostAvatarBg(avatarBg: string): void {
+    const host = this.players.get(this.hostId);
+    if (!host) return;
+    host.avatarBg = sanitizeAvatarBg(avatarBg);
     this.emitRoomState();
   }
 
@@ -181,6 +205,7 @@ export class EmbeddedHostEngine {
       this.config = sanitizeConfig(overrideConfig);
     }
     this.currentRound = 0;
+    this.lastRoundResults = null;
     // Keep letterDeck intact across consecutive matches so letters rotate cleanly without repeating!
     for (const p of this.players.values()) {
       p.totalScore = 0;
@@ -203,11 +228,64 @@ export class EmbeddedHostEngine {
     this.startRound();
   }
 
+  finishGame(): void {
+    if (this.phase !== 'results' && this.phase !== 'playing') return;
+    this.clearTimers();
+    this.phase = 'finished';
+    this.roundEndsAt = null;
+    this.stopTriggered = true;
+    this.finalizing = false;
+
+    const finalResults: RoundResults = this.lastRoundResults
+      ? {
+          ...this.lastRoundResults,
+          isFinalRound: true,
+        }
+      : {
+          roundNumber: Math.max(1, this.currentRound),
+          totalRounds: this.config.totalRounds,
+          letter: this.currentLetter || '—',
+          stopReason: 'timeout',
+          stoppedByName: null,
+          stoppedByPlayerId: null,
+          categoryResults: [],
+          roundScores: Object.fromEntries(
+            [...this.players.values()].map((p) => [p.id, 0])
+          ),
+          leaderboard: buildRankedLeaderboard({
+            entries: [...this.players.values()].map((p) => ({
+              playerId: p.id,
+              playerName: p.name,
+              ...(p.avatarId ? { avatarId: p.avatarId } : {}),
+              ...(p.avatarBg ? { avatarBg: p.avatarBg } : {}),
+              roundScore: 0,
+              totalScore: p.totalScore,
+              hintsUsed: 0,
+              hintPenalty: 0,
+              isHost: p.id === this.hostId,
+            })),
+            stopReason: 'timeout',
+            stoppedByPlayerId: null,
+          }),
+          isFinalRound: true,
+          validatedBy: 'local',
+        };
+
+    this.lastRoundResults = finalResults;
+    this.emitRoomState();
+    this.callbacks.onRoundResults(finalResults);
+    this.broadcastToGuests({
+      type: 'round_results',
+      results: finalResults,
+    });
+  }
+
   playAgain(): void {
     this.clearTimers();
     this.phase = 'lobby';
     this.currentRound = 0;
     this.currentLetter = '';
+    this.lastRoundResults = null;
     // Keep letterDeck intact so consecutive matches continue rotating fresh letters
     this.roundEndsAt = null;
     for (const p of this.players.values()) {
@@ -258,6 +336,8 @@ export class EmbeddedHostEngine {
       players: [...this.players.values()].map((p) => ({
         id: p.id,
         name: p.name,
+        ...(p.avatarId ? { avatarId: p.avatarId } : {}),
+        ...(p.avatarBg ? { avatarBg: p.avatarBg } : {}),
         isHost: p.id === this.hostId,
         totalScore: p.totalScore,
         filledCount: p.filledCount,
@@ -428,6 +508,8 @@ export class EmbeddedHostEngine {
       entries: [...this.players.values()].map((p) => ({
         playerId: p.id,
         playerName: p.name,
+        ...(p.avatarId ? { avatarId: p.avatarId } : {}),
+        ...(p.avatarBg ? { avatarBg: p.avatarBg } : {}),
         roundScore: roundScores[p.id] ?? 0,
         totalScore: p.totalScore,
         hintsUsed: this.roundHintsUsed[p.id] ?? 0,
@@ -452,6 +534,7 @@ export class EmbeddedHostEngine {
       validatedBy: usedAi ? 'gemini' : 'local',
     };
 
+    this.lastRoundResults = results;
     this.emitRoomState();
     this.callbacks.onRoundResults(results);
     this.broadcastToGuests({
@@ -575,11 +658,15 @@ export class EmbeddedHostEngine {
         const playerName =
           sanitizeDisplayText(msg.playerName, MAX_PLAYER_NAME_LENGTH) ||
           `Jugador ${this.players.size + 1}`;
+        const avatarId = sanitizeAvatarId(msg.avatarId);
+        const avatarBg = sanitizeAvatarBg(msg.avatarBg);
 
         this.players.set(playerId, {
           id: playerId,
           clientId,
           name: playerName,
+          avatarId,
+          avatarBg,
           totalScore: 0,
           filledCount: 0,
         });

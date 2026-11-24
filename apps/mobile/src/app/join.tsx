@@ -17,6 +17,8 @@ import {
   DiscoveredLanRoom,
   getLanServerNativeModule,
 } from '../../modules/lan-server';
+import { AvatarPickerModal } from '../components/AvatarPickerModal';
+import { PlayerAvatar } from '../components/PlayerAvatar';
 import { QrScannerView } from '../components/QrScannerView';
 import { useGame } from '../context/GameContext';
 import {
@@ -39,6 +41,10 @@ export default function JoinScreen() {
   const {
     playerName,
     setPlayerName,
+    playerAvatar,
+    setPlayerAvatar,
+    playerAvatarBg,
+    setPlayerAvatarBg,
     serverUrl,
     connectionStatus,
     roomMode,
@@ -67,6 +73,7 @@ export default function JoinScreen() {
     typeof params.ws === 'string' ? params.ws : serverUrl
   );
   const [showServerField, setShowServerField] = useState(false);
+  const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const [scanResetSignal, setScanResetSignal] = useState(0);
   const [discoveredRooms, setDiscoveredRooms] = useState<DiscoveredLanRoom[]>(
@@ -220,7 +227,13 @@ export default function JoinScreen() {
                     p.id === playerId && styles.playerChipMe,
                   ]}
                 >
-                  <View style={styles.onlineDot} />
+                  <PlayerAvatar
+                    avatarId={p.avatarId}
+                    bgId={p.avatarBg}
+                    fallbackName={p.name}
+                    size={26}
+                    ringWidth={1.5}
+                  />
                   <Text style={styles.playerChipText}>
                     {p.name}
                     {p.isHost ? ' (Anfitrión)' : p.id === playerId ? ' (Tú)' : ''}
@@ -303,17 +316,28 @@ export default function JoinScreen() {
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Player Name */}
+          {/* Player Name & Avatar */}
           <View style={styles.card}>
-            <Text style={styles.label}>Tu nombre</Text>
-            <TextInput
-              style={styles.input}
-              value={playerName}
-              onChangeText={setPlayerName}
-              placeholder="Escribe tu nombre"
-              placeholderTextColor={COLORS.slate}
-              maxLength={22}
-            />
+            <Text style={styles.label}>Tu perfil</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.base }}>
+              <PlayerAvatar
+                avatarId={playerAvatar}
+                bgId={playerAvatarBg}
+                fallbackName={playerName}
+                size={48}
+                ringWidth={2}
+                showEditBadge
+                onPress={() => setAvatarPickerOpen(true)}
+              />
+              <TextInput
+                style={[styles.input, { flex: 1 }]}
+                value={playerName}
+                onChangeText={setPlayerName}
+                placeholder="Escribe tu nombre"
+                placeholderTextColor={COLORS.slate}
+                maxLength={22}
+              />
+            </View>
           </View>
 
           {/* Auto-discovered WiFi rooms (1-tap join without needing QR or IP!) */}
@@ -565,6 +589,16 @@ export default function JoinScreen() {
           )}
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <AvatarPickerModal
+        visible={avatarPickerOpen}
+        selectedAvatarId={playerAvatar}
+        selectedBgId={playerAvatarBg}
+        playerName={playerName}
+        onSelectAvatar={setPlayerAvatar}
+        onSelectBg={setPlayerAvatarBg}
+        onClose={() => setAvatarPickerOpen(false)}
+      />
     </SafeAreaView>
   );
 }

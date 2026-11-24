@@ -13,6 +13,8 @@ import {
   isValidRoundResults,
   parseStrictUrl,
   reportSafeError,
+  sanitizeAvatarBg,
+  sanitizeAvatarId,
   sanitizeDisplayText,
   sanitizeIncomingAnswers,
   setCrashReporter,
@@ -40,6 +42,20 @@ test('Module 1.2 — canonicalizeRoomCode enforces strict alphanumeric whitelist
   assert.equal(canonicalizeRoomCode('AB$%'), '');
   assert.equal(canonicalizeRoomCode('ABCDEFGHI'), '');
   assert.equal(canonicalizeRoomCode(null), '');
+});
+
+test('Module 1.2 — sanitizeAvatarId and sanitizeAvatarBg enforce strict whitelists', () => {
+  assert.equal(sanitizeAvatarId('mujer_corto'), 'mujer_corto');
+  assert.equal(sanitizeAvatarId('  ABUELO_MORENO\n '), 'abuelo_moreno');
+  assert.equal(sanitizeAvatarId('../etc/passwd'), undefined);
+  assert.equal(sanitizeAvatarId('<script>'), undefined);
+  assert.equal(sanitizeAvatarId('a'), undefined);
+  assert.equal(sanitizeAvatarId(123), undefined);
+
+  assert.equal(sanitizeAvatarBg('emerald'), 'emerald');
+  assert.equal(sanitizeAvatarBg('  CORAL\n'), 'coral');
+  assert.equal(sanitizeAvatarBg('#ff0000;url(x)'), undefined);
+  assert.equal(sanitizeAvatarBg(null), undefined);
 });
 
 test('Module 3.2 — isPrivateLanHost allows RFC1918/local and blocks cloud metadata & public IPs', () => {

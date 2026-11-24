@@ -15,7 +15,9 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { AvatarPickerModal } from '../components/AvatarPickerModal';
 import { BlurredWordsBackdrop } from '../components/BlurredWordsBackdrop';
+import { PlayerAvatar } from '../components/PlayerAvatar';
 import { useGame } from '../context/GameContext';
 import {
   COLORS,
@@ -30,9 +32,17 @@ import {
 import { promptStoreReviewManually } from '../utils/storeReview';
 
 export default function HomeScreen() {
-  const { playerName, setPlayerName } = useGame();
+  const {
+    playerName,
+    setPlayerName,
+    playerAvatar,
+    setPlayerAvatar,
+    playerAvatarBg,
+    setPlayerAvatarBg,
+  } = useGame();
   const { height } = useWindowDimensions();
   const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
   const [playScale] = useState(() => new Animated.Value(1));
 
   const isCompactScreen = height < 740;
@@ -120,10 +130,17 @@ export default function HomeScreen() {
               )}
 
               <View style={styles.nameCard}>
-                <Ionicons
-                  name="person-circle-outline"
-                  size={20}
-                  color={COLORS.indigo}
+                <PlayerAvatar
+                  avatarId={playerAvatar}
+                  bgId={playerAvatarBg}
+                  fallbackName={playerName}
+                  size={40}
+                  ringWidth={2}
+                  showEditBadge
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    setAvatarPickerOpen(true);
+                  }}
                 />
                 <TextInput
                   style={styles.nameInput}
@@ -299,6 +316,16 @@ export default function HomeScreen() {
           </Pressable>
         </KeyboardAvoidingView>
       </SafeAreaView>
+
+      <AvatarPickerModal
+        visible={avatarPickerOpen}
+        selectedAvatarId={playerAvatar}
+        selectedBgId={playerAvatarBg}
+        playerName={playerName}
+        onSelectAvatar={setPlayerAvatar}
+        onSelectBg={setPlayerAvatarBg}
+        onClose={() => setAvatarPickerOpen(false)}
+      />
     </View>
   );
 }
@@ -361,15 +388,16 @@ const styles = StyleSheet.create({
     marginTop: SPACING.xs,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.sm,
+    gap: SPACING.md,
     backgroundColor: COLORS.surfaceTranslucent,
     borderWidth: 1,
     borderColor: COLORS.border,
     borderRadius: RADII.pill,
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md - 1,
-    width: '78%',
-    maxWidth: 280,
+    paddingLeft: SPACING.sm,
+    paddingRight: SPACING.lg,
+    paddingVertical: SPACING.xs,
+    width: '84%',
+    maxWidth: 300,
     ...SHADOWS.sm,
   },
   nameInput: {

@@ -1,5 +1,6 @@
 import React, { ComponentRef, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Alert,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
@@ -30,6 +31,7 @@ export default function PlayScreen() {
   const {
     config,
     room,
+    isHost,
     currentRound,
     totalRounds,
     currentLetter,
@@ -42,6 +44,8 @@ export default function PlayScreen() {
     requestHint,
     pressStop,
     triggerLocalTimeout,
+    finishGame,
+    leaveGame,
   } = useGame();
 
   const activeConfig = room?.config ?? config;
@@ -233,6 +237,47 @@ export default function PlayScreen() {
 
   const roundsPlayedBefore = Math.max(0, currentRound - 1);
 
+  const handleEarlyExit = () => {
+    if (isRoundLocked) return;
+    Keyboard.dismiss();
+
+    if (isHost) {
+      const title = '¿Finalizar partida?';
+      const message =
+        roundsPlayedBefore > 0
+          ? 'La ronda actual se cerrará y verás los resultados finales con los puntos acumulados hasta ahora.'
+          : 'Se cerrará la partida actual para ver el resumen y elegir si iniciar un nuevo juego o volver al inicio.';
+      if (Platform.OS === 'web') {
+        const ok =
+          typeof window !== 'undefined' && typeof window.confirm === 'function'
+            ? window.confirm(`${title}\n\n${message}`)
+            : true;
+        if (ok) finishGame();
+        return;
+      }
+      Alert.alert(title, message, [
+        { text: 'Seguir jugando', style: 'cancel' },
+        { text: 'Finalizar', style: 'destructive', onPress: finishGame },
+      ]);
+      return;
+    }
+
+    const title = '¿Salir de la partida?';
+    const message = 'Saldrás de la sala y volverás a la pantalla de inicio.';
+    if (Platform.OS === 'web') {
+      const ok =
+        typeof window !== 'undefined' && typeof window.confirm === 'function'
+          ? window.confirm(`${title}\n\n${message}`)
+          : true;
+      if (ok) leaveGame();
+      return;
+    }
+    Alert.alert(title, message, [
+      { text: 'Seguir jugando', style: 'cancel' },
+      { text: 'Salir', style: 'destructive', onPress: leaveGame },
+    ]);
+  };
+
   return (
     <SafeAreaView style={styles.safe}>
       <KeyboardAvoidingView
@@ -240,9 +285,29 @@ export default function PlayScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 4 : 0}
       >
-        {/* TOP HUD: Timer, Rounds Progress, Round Letter */}
+        {/* TOP HUD: Exit/Finish, Timer, Rounds Progress, Round Letter */}
         <View style={styles.hud}>
           <View style={styles.hudLeft}>
+            <Pressable
+              onPress={handleEarlyExit}
+              disabled={isRoundLocked}
+              hitSlop={6}
+              accessibilityLabel={
+                isHost ? 'Finalizar partida' : 'Salir de la partida'
+              }
+              style={({ pressed }) => [
+                styles.exitBtn,
+                pressed && styles.exitBtnPressed,
+                isRoundLocked && styles.exitBtnDisabled,
+              ]}
+            >
+              <Ionicons
+                name={isHost ? 'flag-outline' : 'exit-outline'}
+                size={18}
+                color={COLORS.inkMuted}
+              />
+            </Pressable>
+
             <View
               style={[
                 styles.timerBox,
@@ -576,8 +641,24 @@ const styles = StyleSheet.create({
   hudLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.base,
+    gap: SPACING.sm,
     flex: 1,
+  },
+  exitBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: RADII.lg,
+    backgroundColor: COLORS.bg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  exitBtnPressed: {
+    opacity: 0.7,
+  },
+  exitBtnDisabled: {
+    opacity: 0.4,
   },
   timerBox: {
     flexDirection: 'row',

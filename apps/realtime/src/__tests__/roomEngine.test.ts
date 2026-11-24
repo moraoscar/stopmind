@@ -119,3 +119,92 @@ test('rejects joining non-existent room and transfers host on disconnect', () =>
   engine.handleDisconnect('host_1');
   assert.equal(engine.playerCount, 1);
 });
+
+test('host can finish match early after round 1 of 3 and guest finish_game is ignored', async () => {
+  const { transport, broadcasts } = createMockTransport();
+  const engine = new OnlineRoomEngine('END1', transport);
+
+  engine.handleMessage(
+    'host_1',
+    JSON.stringify({
+      type: 'create_room',
+      playerName: 'Oscar',
+      config: {
+        categories: ['Nombre', 'Animal'],
+        allowedLetters: ['M', 'P', 'S'],
+        timeLimitSeconds: 60,
+        totalRounds: 3,
+        validateLetter: true,
+        aiValidation: false,
+      },
+    })
+  );
+
+  engine.handleMessage(
+    'guest_1',
+    JSON.stringify({
+      type: 'join_room',
+      roomCode: 'END1',
+      playerName: 'Sofía',
+    })
+  );
+
+  engine.handleMessage('host_1', JSON.stringify({ type: 'start_game' }));
+  const firstLetter = (
+    broadcasts.find((b) => b.type === 'round_started') as { letter: string }
+  ).letter;
+
+  engine.handleMessage(
+    'host_1',
+    JSON.stringify({
+      type: 'press_stop',
+      answers: { Nombre: `${firstLetter}ateo`, Animal: `${firstLetter}ono` },
+      hintsUsed: 0,
+    })
+  );
+  engine.handleMessage(
+    'guest_1',
+    JSON.stringify({
+      type: 'submit_answers',
+      answers: { Nombre: `${firstLetter}aría`, Animal: '' },
+      hintsUsed: 0,
+    })
+  );
+
+  await new Promise((r) => setTimeout(r, 15));
+
+  const round1Results = broadcasts
+    .filter((b) => b.type === 'round_results')
+    .at(-1)?.results as { isFinalRound: boolean; roundNumber: number };
+  assert.equal(round1Results.roundNumber, 1);
+  assert.equal(round1Results.isFinalRound, false);
+
+  // Guest cannot finish the match for everyone
+  const countBeforeGuest = broadcasts.length;
+  engine.handleMessage('guest_1', JSON.stringify({ type: 'finish_game' }));
+  assert.equal(broadcasts.length, countBeforeGuest);
+
+  // Host finishes match early -> room transitions to finished with isFinalRound: true & preserved scores
+  engine.handleMessage('host_1', JSON.stringify({ type: 'finish_game' }));
+
+  const finalRoomState = broadcasts
+    .filter((b) => b.type === 'room_state')
+    .at(-1)?.room as { phase: string };
+  assert.equal(finalRoomState.phase, 'finished');
+
+  const finalResults = broadcasts
+    .filter((b) => b.type === 'round_results')
+    .at(-1)?.results as {
+    isFinalRound: boolean;
+    roundNumber: number;
+    totalRounds: number;
+    leaderboard: { playerId: string; totalScore: number; rank: number }[];
+  };
+  assert.equal(finalResults.isFinalRound, true);
+  assert.equal(finalResults.roundNumber, 1);
+  assert.equal(finalResults.totalRounds, 3);
+  assert.equal(finalResults.leaderboard[0]?.playerId, 'host_1');
+  assert.equal(finalResults.leaderboard[0]?.totalScore, 200);
+  assert.equal(finalResults.leaderboard[1]?.playerId, 'guest_1');
+  assert.equal(finalResults.leaderboard[1]?.totalScore, 100);
+});

@@ -18,6 +18,8 @@ export type RoomPhase = 'lobby' | 'playing' | 'scoring' | 'results' | 'finished'
 export interface PlayerInfo {
   id: string;
   name: string;
+  avatarId?: string;
+  avatarBg?: string;
   isHost: boolean;
   totalScore: number;
   filledCount: number;
@@ -63,6 +65,8 @@ export interface CategoryResult {
 export interface LeaderboardEntry {
   playerId: string;
   playerName: string;
+  avatarId?: string;
+  avatarBg?: string;
   roundScore: number;
   totalScore: number;
   hintsUsed?: number;

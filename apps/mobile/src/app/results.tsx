@@ -1,5 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import {
+  Alert,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -8,6 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { PlayerAvatar } from '../components/PlayerAvatar';
 import { useGame } from '../context/GameContext';
 import {
   COLORS,
@@ -49,6 +52,7 @@ export default function ResultsScreen() {
     playerId,
     isHost,
     nextRound,
+    finishGame,
     playAgain,
     leaveGame,
   } = useGame();
@@ -88,25 +92,72 @@ export default function ResultsScreen() {
   );
   const isFirstPlaceTie = winners.length > 1;
   const primaryWinner = winners[0];
+  const endedEarlyBeforeScoring =
+    roundResults.isFinalRound && roundResults.categoryResults.length === 0;
+  const endedEarlyAfterRound =
+    roundResults.isFinalRound &&
+    roundResults.categoryResults.length > 0 &&
+    roundResults.roundNumber < roundResults.totalRounds;
+
+  const confirmFinishGame = () => {
+    const title = '¿Finalizar partida?';
+    const message =
+      'Se cerrará la partida con los puntajes actuales para ver el podio final.';
+    if (Platform.OS === 'web') {
+      const ok =
+        typeof window !== 'undefined' && typeof window.confirm === 'function'
+          ? window.confirm(`${title}\n\n${message}`)
+          : true;
+      if (ok) finishGame();
+      return;
+    }
+    Alert.alert(title, message, [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Finalizar', style: 'destructive', onPress: finishGame },
+    ]);
+  };
+
+  const confirmGuestLeave = () => {
+    const title = '¿Salir de la partida?';
+    const message = 'Saldrás de la sala y volverás a la pantalla de inicio.';
+    if (Platform.OS === 'web') {
+      const ok =
+        typeof window !== 'undefined' && typeof window.confirm === 'function'
+          ? window.confirm(`${title}\n\n${message}`)
+          : true;
+      if (ok) leaveGame();
+      return;
+    }
+    Alert.alert(title, message, [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Salir', style: 'destructive', onPress: leaveGame },
+    ]);
+  };
 
   return (
     <SafeAreaView style={styles.safe}>
       {/* Top Header */}
       <View style={styles.header}>
-        <View>
+        <View style={styles.headerTextWrap}>
           <Text style={styles.headerTitle}>
             {roundResults.isFinalRound
               ? 'Resultados Finales'
               : `Fin de Ronda ${roundResults.roundNumber} de ${roundResults.totalRounds}`}
           </Text>
           <Text style={styles.headerSub}>
-            Letra {roundResults.letter} ·{' '}
-            {roundResults.stopReason === 'stop' && roundResults.stoppedByName
-              ? `STOP por ${roundResults.stoppedByName}`
-              : 'Tiempo terminado'}
-            {roundResults.validatedBy === 'gemini'
-              ? ' · ✨ Revisión IA'
-              : ' · Revisión local'}
+            {endedEarlyBeforeScoring
+              ? 'Partida finalizada anticipadamente'
+              : endedEarlyAfterRound
+                ? `Finalizada tras ${roundResults.roundNumber} de ${roundResults.totalRounds} rondas · Letra ${roundResults.letter}`
+                : `Letra ${roundResults.letter} · ${
+                    roundResults.stopReason === 'stop' && roundResults.stoppedByName
+                      ? `STOP por ${roundResults.stoppedByName}`
+                      : 'Tiempo terminado'
+                  }${
+                    roundResults.validatedBy === 'gemini'
+                      ? ' · ✨ Revisión IA'
+                      : ' · Revisión local'
+                  }`}
           </Text>
         </View>
         <View style={styles.letterPill}>
@@ -121,14 +172,29 @@ export default function ResultsScreen() {
         {/* Final Winner Celebration */}
         {roundResults.isFinalRound && primaryWinner && (
           <View style={styles.winnerBanner}>
-            <Ionicons name="trophy" size={34} color="#FDE047" />
-            <Text style={styles.winnerEyebrow}>
-              {!isMultiplayer
-                ? 'PARTIDA COMPLETADA'
-                : isFirstPlaceTie
-                  ? 'EMPATE EN PRIMER LUGAR'
-                  : 'GANADOR DE LA PARTIDA'}
-            </Text>
+            <View style={styles.winnerAvatarsRow}>
+              {winners.map((w) => (
+                <PlayerAvatar
+                  key={w.playerId}
+                  avatarId={w.avatarId}
+                  bgId={w.avatarBg}
+                  fallbackName={w.playerName}
+                  size={isFirstPlaceTie ? 62 : 76}
+                  ringColor={COLORS.trophyGold}
+                  ringWidth={3}
+                />
+              ))}
+            </View>
+            <View style={styles.winnerTrophyRow}>
+              <Ionicons name="trophy" size={16} color={COLORS.trophyGold} />
+              <Text style={styles.winnerEyebrow}>
+                {!isMultiplayer
+                  ? 'PARTIDA COMPLETADA'
+                  : isFirstPlaceTie
+                    ? 'EMPATE EN PRIMER LUGAR'
+                    : 'GANADOR DE LA PARTIDA'}
+              </Text>
+            </View>
             <Text style={styles.winnerName}>
               {isFirstPlaceTie
                 ? winners.map((w) => w.playerName).join(' · ')
@@ -199,6 +265,13 @@ export default function ResultsScreen() {
                       {rank}
                     </Text>
                   </View>
+                  <PlayerAvatar
+                    avatarId={entry.avatarId}
+                    bgId={entry.avatarBg}
+                    fallbackName={entry.playerName}
+                    size={38}
+                    ringWidth={2}
+                  />
                   <View style={styles.rankInfo}>
                     <Text style={styles.rankName}>
                       {entry.playerName}
@@ -221,165 +294,190 @@ export default function ResultsScreen() {
         )}
 
         {/* Per-Category Breakdown */}
-        <View style={styles.card}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="list-circle" size={19} color={COLORS.indigo} />
-            <Text style={styles.sectionTitle}>Detalle por categoría</Text>
-          </View>
-
-          <View style={styles.legendRow}>
-            <View style={[styles.legendPill, styles.pts100Bg]}>
-              <Text style={[styles.legendText, styles.pts100Text]}>
-                100 única
-              </Text>
+        {roundResults.categoryResults.length > 0 && (
+          <View style={styles.card}>
+            <View style={styles.sectionHeader}>
+              <Ionicons name="list-circle" size={19} color={COLORS.indigo} />
+              <Text style={styles.sectionTitle}>Detalle por categoría</Text>
             </View>
-            <View style={[styles.legendPill, styles.pts50Bg]}>
-              <Text style={[styles.legendText, styles.pts50Text]}>
-                50 repetida
-              </Text>
-            </View>
-            <View style={[styles.legendPill, styles.pts0Bg]}>
-              <Text style={[styles.legendText, styles.pts0Text]}>
-                0 vacía / inválida
-              </Text>
-            </View>
-          </View>
 
-          {roundResults.categoryResults.map((catRes) => {
-            const myEntry =
-              catRes.entries.find((e) => e.playerId === playerId) ??
-              catRes.entries[0];
+            <View style={styles.legendRow}>
+              <View style={[styles.legendPill, styles.pts100Bg]}>
+                <Text style={[styles.legendText, styles.pts100Text]}>
+                  100 única
+                </Text>
+              </View>
+              <View style={[styles.legendPill, styles.pts50Bg]}>
+                <Text style={[styles.legendText, styles.pts50Text]}>
+                  50 repetida
+                </Text>
+              </View>
+              <View style={[styles.legendPill, styles.pts0Bg]}>
+                <Text style={[styles.legendText, styles.pts0Text]}>
+                  0 vacía / inválida
+                </Text>
+              </View>
+            </View>
 
-            return (
-              <View key={catRes.category} style={styles.catResultBlock}>
-                <View style={styles.catResultTop}>
-                  <Text style={styles.catResultTitle}>{catRes.category}</Text>
-                  {myEntry && (
-                    <View
-                      style={[
-                        styles.ptsBadge,
-                        myEntry.points === 100
-                          ? styles.pts100Bg
-                          : myEntry.points === 50
-                            ? styles.pts50Bg
-                            : myEntry.reason === 'invalid' ||
-                                myEntry.reason === 'wrong_letter'
-                              ? styles.ptsInvalidBg
-                              : styles.pts0Bg,
-                      ]}
-                    >
-                      <Text
+            {roundResults.categoryResults.map((catRes) => {
+              const myEntry =
+                catRes.entries.find((e) => e.playerId === playerId) ??
+                catRes.entries[0];
+
+              return (
+                <View key={catRes.category} style={styles.catResultBlock}>
+                  <View style={styles.catResultTop}>
+                    <Text style={styles.catResultTitle}>{catRes.category}</Text>
+                    {myEntry && (
+                      <View
                         style={[
-                          styles.ptsBadgeText,
+                          styles.ptsBadge,
                           myEntry.points === 100
-                            ? styles.pts100Text
+                            ? styles.pts100Bg
                             : myEntry.points === 50
-                              ? styles.pts50Text
+                              ? styles.pts50Bg
                               : myEntry.reason === 'invalid' ||
                                   myEntry.reason === 'wrong_letter'
-                                ? styles.ptsInvalidText
-                                : styles.pts0Text,
+                                ? styles.ptsInvalidBg
+                                : styles.pts0Bg,
                         ]}
                       >
-                        +{myEntry.points} pts
+                        <Text
+                          style={[
+                            styles.ptsBadgeText,
+                            myEntry.points === 100
+                              ? styles.pts100Text
+                              : myEntry.points === 50
+                                ? styles.pts50Text
+                                : myEntry.reason === 'invalid' ||
+                                    myEntry.reason === 'wrong_letter'
+                                  ? styles.ptsInvalidText
+                                  : styles.pts0Text,
+                          ]}
+                        >
+                          +{myEntry.points} pts
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+
+                  {myEntry && (
+                    <View style={styles.myWordRow}>
+                      <Text
+                        style={[
+                          styles.myWordText,
+                          !myEntry.word && styles.emptyWordText,
+                          myEntry.reason === 'invalid' && styles.invalidWordText,
+                        ]}
+                      >
+                        {myEntry.word || '— (vacío)'}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.reasonText,
+                          (myEntry.reason === 'invalid' ||
+                            myEntry.reason === 'wrong_letter') &&
+                            styles.ptsInvalidText,
+                        ]}
+                      >
+                        {getReasonLabel(
+                          myEntry.reason,
+                          myEntry.matchedWith,
+                          roundResults.letter,
+                          myEntry.invalidDetail
+                        )}
                       </Text>
                     </View>
                   )}
+
+                  {/* Other players' words in multiplayer */}
+                  {isMultiplayer && (
+                    <View style={styles.othersList}>
+                      {catRes.entries
+                        .filter((e) => e.playerId !== playerId)
+                        .map((other) => (
+                          <View key={other.playerId} style={styles.otherRow}>
+                            <Text style={styles.otherName}>
+                              {other.playerName}:
+                            </Text>
+                            <Text
+                              style={[
+                                styles.otherWord,
+                                !other.word && styles.emptyWordText,
+                              ]}
+                              numberOfLines={1}
+                            >
+                              {other.word || '—'}
+                            </Text>
+                            <Text
+                              style={[
+                                styles.otherPts,
+                                other.points === 100
+                                  ? styles.pts100Text
+                                  : other.points === 50
+                                    ? styles.pts50Text
+                                    : styles.pts0Text,
+                              ]}
+                            >
+                              +{other.points}
+                            </Text>
+                          </View>
+                        ))}
+                    </View>
+                  )}
                 </View>
-
-                {myEntry && (
-                  <View style={styles.myWordRow}>
-                    <Text
-                      style={[
-                        styles.myWordText,
-                        !myEntry.word && styles.emptyWordText,
-                        myEntry.reason === 'invalid' && styles.invalidWordText,
-                      ]}
-                    >
-                      {myEntry.word || '— (vacío)'}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.reasonText,
-                        (myEntry.reason === 'invalid' ||
-                          myEntry.reason === 'wrong_letter') &&
-                          styles.ptsInvalidText,
-                      ]}
-                    >
-                      {getReasonLabel(
-                        myEntry.reason,
-                        myEntry.matchedWith,
-                        roundResults.letter,
-                        myEntry.invalidDetail
-                      )}
-                    </Text>
-                  </View>
-                )}
-
-                {/* Other players' words in multiplayer */}
-                {isMultiplayer && (
-                  <View style={styles.othersList}>
-                    {catRes.entries
-                      .filter((e) => e.playerId !== playerId)
-                      .map((other) => (
-                        <View key={other.playerId} style={styles.otherRow}>
-                          <Text style={styles.otherName}>
-                            {other.playerName}:
-                          </Text>
-                          <Text
-                            style={[
-                              styles.otherWord,
-                              !other.word && styles.emptyWordText,
-                            ]}
-                            numberOfLines={1}
-                          >
-                            {other.word || '—'}
-                          </Text>
-                          <Text
-                            style={[
-                              styles.otherPts,
-                              other.points === 100
-                                ? styles.pts100Text
-                                : other.points === 50
-                                  ? styles.pts50Text
-                                  : styles.pts0Text,
-                            ]}
-                          >
-                            +{other.points}
-                          </Text>
-                        </View>
-                      ))}
-                  </View>
-                )}
-              </View>
-            );
-          })}
-        </View>
+              );
+            })}
+          </View>
+        )}
       </ScrollView>
 
       {/* Footer Actions */}
       <View style={styles.footer}>
         {!roundResults.isFinalRound ? (
           isHost ? (
-            <Pressable
-              onPress={nextRound}
-              style={({ pressed }) => [
-                styles.primaryBtn,
-                pressed && styles.primaryBtnPressed,
-              ]}
-            >
-              <Text style={styles.primaryBtnText}>
-                SIGUIENTE RONDA ({roundResults.roundNumber + 1}/
-                {roundResults.totalRounds})
-              </Text>
-              <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
-            </Pressable>
+            <View style={styles.betweenRoundsActions}>
+              <Pressable
+                onPress={nextRound}
+                style={({ pressed }) => [
+                  styles.primaryBtn,
+                  pressed && styles.primaryBtnPressed,
+                ]}
+              >
+                <Text style={styles.primaryBtnText}>
+                  SIGUIENTE RONDA ({roundResults.roundNumber + 1}/
+                  {roundResults.totalRounds})
+                </Text>
+                <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
+              </Pressable>
+
+              <Pressable
+                onPress={confirmFinishGame}
+                style={({ pressed }) => [
+                  styles.finishEarlyBtn,
+                  pressed && styles.finishEarlyBtnPressed,
+                ]}
+              >
+                <Ionicons name="flag-outline" size={16} color={COLORS.stopRed} />
+                <Text style={styles.finishEarlyBtnText}>Finalizar partida</Text>
+              </Pressable>
+            </View>
           ) : (
-            <View style={styles.guestWaitBar}>
-              <Text style={styles.guestWaitText}>
-                Esperando a que el anfitrión inicie la ronda{' '}
-                {roundResults.roundNumber + 1}…
-              </Text>
+            <View style={styles.guestFooterRow}>
+              <View style={[styles.guestWaitBar, styles.flexBtn]}>
+                <Text style={styles.guestWaitText}>
+                  Esperando al anfitrión para la ronda{' '}
+                  {roundResults.roundNumber + 1}…
+                </Text>
+              </View>
+              <Pressable
+                onPress={confirmGuestLeave}
+                style={styles.guestLeaveBtn}
+                accessibilityLabel="Salir de la partida"
+              >
+                <Ionicons name="exit-outline" size={18} color={COLORS.inkMuted} />
+                <Text style={styles.guestLeaveText}>Salir</Text>
+              </Pressable>
             </View>
           )
         ) : (
@@ -420,11 +518,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: SPACING.md,
     paddingHorizontal: SPACING.xl,
     paddingVertical: SPACING.base,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
     backgroundColor: COLORS.surface,
+  },
+  headerTextWrap: {
+    flex: 1,
   },
   headerTitle: {
     fontSize: FONT_SIZES.xl,
@@ -460,14 +562,25 @@ const styles = StyleSheet.create({
     borderRadius: RADII.modal,
     padding: SPACING.xxl + 2,
     alignItems: 'center',
-    gap: SPACING.xxs,
+    gap: SPACING.xs,
+  },
+  winnerAvatarsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.md,
+    marginBottom: SPACING.xs,
+  },
+  winnerTrophyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
   },
   winnerEyebrow: {
     color: COLORS.trophyGold,
     fontSize: FONT_SIZES.xs,
     fontWeight: FONT_WEIGHTS.extrabold,
     letterSpacing: LETTER_SPACING.wider,
-    marginTop: SPACING.xxs,
   },
   winnerName: {
     color: COLORS.white,
@@ -718,6 +831,51 @@ const styles = StyleSheet.create({
   finalActions: {
     flexDirection: 'row',
     gap: SPACING.md,
+  },
+  betweenRoundsActions: {
+    gap: SPACING.sm,
+  },
+  finishEarlyBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.xs,
+    backgroundColor: COLORS.surface,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    borderRadius: RADII.xl,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  finishEarlyBtnPressed: {
+    opacity: 0.75,
+  },
+  finishEarlyBtnText: {
+    color: COLORS.stopRed,
+    fontSize: FONT_SIZES.base,
+    fontWeight: FONT_WEIGHTS.extrabold,
+  },
+  guestFooterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+  guestLeaveBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.xxs,
+    backgroundColor: COLORS.surface,
+    paddingVertical: SPACING.lg,
+    paddingHorizontal: SPACING.base,
+    borderRadius: RADII.xl,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  guestLeaveText: {
+    color: COLORS.inkMuted,
+    fontSize: FONT_SIZES.sm,
+    fontWeight: FONT_WEIGHTS.extrabold,
   },
   flexBtn: {
     flex: 1,
