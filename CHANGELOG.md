@@ -18,6 +18,9 @@ Todos los cambios relevantes del proyecto se documentan en este archivo siguiend
 - **Finalizar partida anticipadamente (`GameContext`, `EmbeddedHostEngine`, `OnlineRoomEngine`, `play.tsx`, `results.tsx`)**:
   - Nueva opción **Finalizar partida** (con confirmación) disponible entre rondas en la pantalla de resultados y en la barra superior durante una ronda activa, compatible con **Solo**, **Wi-Fi local** y **Modo Online**.
   - Cierra la partida conservando los puntajes acumulados hasta el momento, muestra inmediatamente el **podio y resultados finales** a todos los jugadores y permite elegir entre **JUGAR DE NUEVO** o volver al **Inicio**; además añade botón **Salir** con confirmación para invitados.
+- **Confeti de celebración en pantalla completa para el primer lugar en cada ronda (`ConfettiCelebration`, `celebration.ts`, `results.tsx`)**:
+  - Al finalizar cada ronda (y con lluvia reforzada en los resultados finales), los participantes que ocupen el **1.er lugar** en la tabla de posiciones (incluyendo empates en primer puesto) ven una animación fluida de confeti en toda la pantalla sin bloquear botones ni desplazamiento.
+  - Respeta la preferencia de accesibilidad **Reducir movimiento** del sistema operativo y no se dispara en rondas sin puntos.
 
 ---
 
