@@ -94,6 +94,7 @@ export class OnlineRoomEngine {
   private stopReason: 'stop' | 'timeout' | null = null;
   private stoppedByName: string | null = null;
   private stoppedByPlayerId: string | null = null;
+  private lastRoundResults: RoundResults | null = null;
 
   constructor(roomCode: string, transport: RoomTransport) {
     this.roomCode = roomCode.trim().toUpperCase();
@@ -149,6 +150,9 @@ export class OnlineRoomEngine {
       case 'next_round':
         this.handleNextRound(clientId);
         break;
+      case 'finish_game':
+        this.handleFinishGame(clientId);
+        break;
       case 'play_again':
         this.handlePlayAgain(clientId);
         break;
@@ -203,6 +207,7 @@ export class OnlineRoomEngine {
     this.stopReason = null;
     this.stoppedByName = null;
     this.stoppedByPlayerId = null;
+    this.lastRoundResults = null;
   }
 
   private handleCreateRoom(clientId: string, msg: Record<string, unknown>): void {
@@ -314,6 +319,7 @@ export class OnlineRoomEngine {
       this.config = sanitizeConfig(msg.config as Partial<GameConfig>);
     }
     this.currentRound = 0;
+    this.lastRoundResults = null;
     for (const p of this.players.values()) {
       p.totalScore = 0;
       p.filledCount = 0;
@@ -328,6 +334,60 @@ export class OnlineRoomEngine {
     this.startRound();
   }
 
+  private handleFinishGame(clientId: string): void {
+    if (clientId !== this.hostId) return;
+    if (this.phase !== 'results' && this.phase !== 'playing') return;
+
+    this.transport.clearTimer('round');
+    this.transport.clearTimer('finalize');
+    this.phase = 'finished';
+    this.roundEndsAt = null;
+    this.stopTriggered = true;
+    this.finalizing = false;
+
+    const finalResults: RoundResults = this.lastRoundResults
+      ? {
+          ...this.lastRoundResults,
+          isFinalRound: true,
+        }
+      : {
+          roundNumber: Math.max(1, this.currentRound),
+          totalRounds: this.config.totalRounds,
+          letter: this.currentLetter || '—',
+          stopReason: 'timeout',
+          stoppedByName: null,
+          stoppedByPlayerId: null,
+          categoryResults: [],
+          roundScores: Object.fromEntries(
+            [...this.players.values()].map((p) => [p.id, 0])
+          ),
+          leaderboard: buildRankedLeaderboard({
+            entries: [...this.players.values()].map((p) => ({
+              playerId: p.id,
+              playerName: p.name,
+              ...(p.avatarId ? { avatarId: p.avatarId } : {}),
+              ...(p.avatarBg ? { avatarBg: p.avatarBg } : {}),
+              roundScore: 0,
+              totalScore: p.totalScore,
+              hintsUsed: 0,
+              hintPenalty: 0,
+              isHost: p.id === this.hostId,
+            })),
+            stopReason: 'timeout',
+            stoppedByPlayerId: null,
+          }),
+          isFinalRound: true,
+          validatedBy: 'local',
+        };
+
+    this.lastRoundResults = finalResults;
+    this.emitRoomState();
+    this.transport.broadcast({
+      type: 'round_results',
+      results: finalResults,
+    });
+  }
+
   private handlePlayAgain(clientId: string): void {
     if (clientId !== this.hostId) return;
     this.transport.clearTimer('round');
@@ -335,6 +395,7 @@ export class OnlineRoomEngine {
     this.phase = 'lobby';
     this.currentRound = 0;
     this.currentLetter = '';
+    this.lastRoundResults = null;
     this.roundEndsAt = null;
     for (const p of this.players.values()) {
       p.totalScore = 0;
@@ -598,6 +659,7 @@ export class OnlineRoomEngine {
       validatedBy: usedAi ? 'gemini' : 'local',
     };
 
+    this.lastRoundResults = results;
     this.emitRoomState();
     this.transport.broadcast({
       type: 'round_results',

@@ -95,6 +95,7 @@ export class EmbeddedHostEngine {
   private stopReason: 'stop' | 'timeout' | null = null;
   private stoppedByName: string | null = null;
   private stoppedByPlayerId: string | null = null;
+  private lastRoundResults: RoundResults | null = null;
 
   private roundTimer: ReturnType<typeof setTimeout> | null = null;
   private finalizeTimer: ReturnType<typeof setTimeout> | null = null;
@@ -169,6 +170,7 @@ export class EmbeddedHostEngine {
     }
     this.players.clear();
     this.clientToPlayerId.clear();
+    this.lastRoundResults = null;
   }
 
   updateHostName(name: string): void {
@@ -203,6 +205,7 @@ export class EmbeddedHostEngine {
       this.config = sanitizeConfig(overrideConfig);
     }
     this.currentRound = 0;
+    this.lastRoundResults = null;
     // Keep letterDeck intact across consecutive matches so letters rotate cleanly without repeating!
     for (const p of this.players.values()) {
       p.totalScore = 0;
@@ -225,11 +228,64 @@ export class EmbeddedHostEngine {
     this.startRound();
   }
 
+  finishGame(): void {
+    if (this.phase !== 'results' && this.phase !== 'playing') return;
+    this.clearTimers();
+    this.phase = 'finished';
+    this.roundEndsAt = null;
+    this.stopTriggered = true;
+    this.finalizing = false;
+
+    const finalResults: RoundResults = this.lastRoundResults
+      ? {
+          ...this.lastRoundResults,
+          isFinalRound: true,
+        }
+      : {
+          roundNumber: Math.max(1, this.currentRound),
+          totalRounds: this.config.totalRounds,
+          letter: this.currentLetter || '—',
+          stopReason: 'timeout',
+          stoppedByName: null,
+          stoppedByPlayerId: null,
+          categoryResults: [],
+          roundScores: Object.fromEntries(
+            [...this.players.values()].map((p) => [p.id, 0])
+          ),
+          leaderboard: buildRankedLeaderboard({
+            entries: [...this.players.values()].map((p) => ({
+              playerId: p.id,
+              playerName: p.name,
+              ...(p.avatarId ? { avatarId: p.avatarId } : {}),
+              ...(p.avatarBg ? { avatarBg: p.avatarBg } : {}),
+              roundScore: 0,
+              totalScore: p.totalScore,
+              hintsUsed: 0,
+              hintPenalty: 0,
+              isHost: p.id === this.hostId,
+            })),
+            stopReason: 'timeout',
+            stoppedByPlayerId: null,
+          }),
+          isFinalRound: true,
+          validatedBy: 'local',
+        };
+
+    this.lastRoundResults = finalResults;
+    this.emitRoomState();
+    this.callbacks.onRoundResults(finalResults);
+    this.broadcastToGuests({
+      type: 'round_results',
+      results: finalResults,
+    });
+  }
+
   playAgain(): void {
     this.clearTimers();
     this.phase = 'lobby';
     this.currentRound = 0;
     this.currentLetter = '';
+    this.lastRoundResults = null;
     // Keep letterDeck intact so consecutive matches continue rotating fresh letters
     this.roundEndsAt = null;
     for (const p of this.players.values()) {
@@ -478,6 +534,7 @@ export class EmbeddedHostEngine {
       validatedBy: usedAi ? 'gemini' : 'local',
     };
 
+    this.lastRoundResults = results;
     this.emitRoomState();
     this.callbacks.onRoundResults(results);
     this.broadcastToGuests({
