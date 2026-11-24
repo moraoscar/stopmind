@@ -15,6 +15,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { QrInviteModal } from '../components/QrInviteModal';
+import { PlayerAvatar } from '../components/PlayerAvatar';
 import {
   BONUS_CATEGORIES,
   DEFAULT_CATEGORIES,
@@ -712,7 +713,13 @@ export default function SetupScreen() {
                 <View style={styles.playersList}>
                   {room.players.map((p) => (
                     <View key={p.id} style={styles.playerPill}>
-                      <View style={styles.onlineDot} />
+                      <PlayerAvatar
+                        avatarId={p.avatarId}
+                        bgId={p.avatarBg}
+                        fallbackName={p.name}
+                        size={24}
+                        ringWidth={1.5}
+                      />
                       <Text style={styles.playerPillText}>
                         {p.name}
                         {p.isHost ? ' ★' : ''}

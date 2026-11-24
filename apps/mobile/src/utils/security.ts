@@ -15,6 +15,7 @@ export const MAX_HINT_LENGTH = 40;
 export const MAX_LOCAL_CACHE_ENTRIES = 500;
 
 const ROOM_CODE_REGEX = /^[A-Z0-9]{4,8}$/;
+const AVATAR_ID_REGEX = /^[a-z0-9_]{2,24}$/;
 const CONTROL_CHARS_REGEX = /[\u0000-\u001F\u007F]/g;
 
 const DEFAULT_ALLOWED_REALTIME_HOSTS = new Set<string>([
@@ -90,6 +91,26 @@ export function canonicalizeRoomCode(raw: unknown): string {
 
 export function isValidRoomCode(code: string): boolean {
   return ROOM_CODE_REGEX.test(code);
+}
+
+/**
+ * Module 1.2 — Canonicalize and whitelist avatar identifiers (`[a-z0-9_]{2,24}`).
+ */
+export function sanitizeAvatarId(raw: unknown): string | undefined {
+  if (typeof raw !== 'string') return undefined;
+  const cleaned = raw.replace(CONTROL_CHARS_REGEX, '').trim().toLowerCase();
+  return AVATAR_ID_REGEX.test(cleaned) ? cleaned : undefined;
+}
+
+const AVATAR_BG_ID_REGEX = /^[a-z0-9_]{2,16}$/;
+
+/**
+ * Module 1.2 — Canonicalize and whitelist avatar background palette IDs.
+ */
+export function sanitizeAvatarBg(raw: unknown): string | undefined {
+  if (typeof raw !== 'string') return undefined;
+  const cleaned = raw.replace(CONTROL_CHARS_REGEX, '').trim().toLowerCase();
+  return AVATAR_BG_ID_REGEX.test(cleaned) ? cleaned : undefined;
 }
 
 /**

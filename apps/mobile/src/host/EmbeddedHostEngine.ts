@@ -21,6 +21,8 @@ import {
   MAX_LAN_MESSAGE_BYTES,
   MAX_LAN_PLAYERS,
   MAX_PLAYER_NAME_LENGTH,
+  sanitizeAvatarBg,
+  sanitizeAvatarId,
   sanitizeDisplayText,
   sanitizeIncomingAnswers,
 } from '../utils/security';
@@ -47,6 +49,8 @@ interface InternalPlayer {
   id: string;
   clientId: string | null; // null = local host phone
   name: string;
+  avatarId?: string;
+  avatarBg?: string;
   totalScore: number;
   filledCount: number;
 }
@@ -98,7 +102,9 @@ export class EmbeddedHostEngine {
   constructor(
     hostName: string,
     initialConfig: GameConfig,
-    callbacks: EmbeddedHostCallbacks
+    callbacks: EmbeddedHostCallbacks,
+    hostAvatarId?: string,
+    hostAvatarBg?: string
   ) {
     this.callbacks = callbacks;
     this.config = sanitizeConfig(initialConfig);
@@ -107,6 +113,8 @@ export class EmbeddedHostEngine {
       id: this.hostId,
       clientId: null,
       name: hostName.trim().slice(0, 24) || 'Anfitrión',
+      avatarId: sanitizeAvatarId(hostAvatarId),
+      avatarBg: sanitizeAvatarBg(hostAvatarBg),
       totalScore: 0,
       filledCount: 0,
     });
@@ -167,6 +175,20 @@ export class EmbeddedHostEngine {
     const host = this.players.get(this.hostId);
     if (!host) return;
     host.name = name.trim().slice(0, 24) || 'Anfitrión';
+    this.emitRoomState();
+  }
+
+  updateHostAvatar(avatarId: string): void {
+    const host = this.players.get(this.hostId);
+    if (!host) return;
+    host.avatarId = sanitizeAvatarId(avatarId);
+    this.emitRoomState();
+  }
+
+  updateHostAvatarBg(avatarBg: string): void {
+    const host = this.players.get(this.hostId);
+    if (!host) return;
+    host.avatarBg = sanitizeAvatarBg(avatarBg);
     this.emitRoomState();
   }
 
@@ -258,6 +280,8 @@ export class EmbeddedHostEngine {
       players: [...this.players.values()].map((p) => ({
         id: p.id,
         name: p.name,
+        ...(p.avatarId ? { avatarId: p.avatarId } : {}),
+        ...(p.avatarBg ? { avatarBg: p.avatarBg } : {}),
         isHost: p.id === this.hostId,
         totalScore: p.totalScore,
         filledCount: p.filledCount,
@@ -428,6 +452,8 @@ export class EmbeddedHostEngine {
       entries: [...this.players.values()].map((p) => ({
         playerId: p.id,
         playerName: p.name,
+        ...(p.avatarId ? { avatarId: p.avatarId } : {}),
+        ...(p.avatarBg ? { avatarBg: p.avatarBg } : {}),
         roundScore: roundScores[p.id] ?? 0,
         totalScore: p.totalScore,
         hintsUsed: this.roundHintsUsed[p.id] ?? 0,
@@ -575,11 +601,15 @@ export class EmbeddedHostEngine {
         const playerName =
           sanitizeDisplayText(msg.playerName, MAX_PLAYER_NAME_LENGTH) ||
           `Jugador ${this.players.size + 1}`;
+        const avatarId = sanitizeAvatarId(msg.avatarId);
+        const avatarBg = sanitizeAvatarBg(msg.avatarBg);
 
         this.players.set(playerId, {
           id: playerId,
           clientId,
           name: playerName,
+          avatarId,
+          avatarBg,
           totalScore: 0,
           filledCount: 0,
         });

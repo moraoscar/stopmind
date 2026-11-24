@@ -35,7 +35,11 @@ import {
   normalizeServerUrl,
 } from '../utils/network';
 import {
+  loadSavedAvatarBg,
+  loadSavedAvatarId,
   loadSavedPlayerName,
+  savePlayerAvatarBgLocal,
+  savePlayerAvatarLocal,
   savePlayerNameLocal,
 } from '../utils/playerStorage';
 import {
@@ -56,6 +60,10 @@ interface StopBanner {
 interface GameContextValue {
   playerName: string;
   setPlayerName: (name: string) => void;
+  playerAvatar: string;
+  setPlayerAvatar: (avatarId: string) => void;
+  playerAvatarBg: string;
+  setPlayerAvatarBg: (avatarBg: string) => void;
   serverUrl: string;
   setServerUrl: (url: string) => void;
   connectionStatus: ConnectionStatus;
@@ -132,6 +140,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [playerName, setPlayerNameState] = useState<string>(() =>
     loadSavedPlayerName()
   );
+  const [playerAvatar, setPlayerAvatarState] = useState<string>(() =>
+    loadSavedAvatarId()
+  );
+  const [playerAvatarBg, setPlayerAvatarBgState] = useState<string>(() =>
+    loadSavedAvatarBg()
+  );
   const [serverUrl, setServerUrlState] = useState<string>(() =>
     getDefaultLanServerUrl()
   );
@@ -162,6 +176,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const hintsUsedRef = useRef<number>(0);
   const configRef = useRef<GameConfig>(config);
   const playerNameRef = useRef(playerName);
+  const playerAvatarRef = useRef(playerAvatar);
+  const playerAvatarBgRef = useRef(playerAvatarBg);
   const playerIdRef = useRef<string | null>(null);
   const roomRef = useRef<RoomSnapshot | null>(null);
   const connectionStatusRef = useRef<ConnectionStatus>(connectionStatus);
@@ -183,6 +199,14 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     playerNameRef.current = playerName;
   }, [playerName]);
+
+  useEffect(() => {
+    playerAvatarRef.current = playerAvatar;
+  }, [playerAvatar]);
+
+  useEffect(() => {
+    playerAvatarBgRef.current = playerAvatarBg;
+  }, [playerAvatarBg]);
 
   useEffect(() => {
     playerIdRef.current = playerId;
@@ -207,6 +231,24 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     savePlayerNameLocal(name);
     if (embeddedHostRef.current) {
       embeddedHostRef.current.updateHostName(name);
+    }
+  }, []);
+
+  const setPlayerAvatar = useCallback((avatarId: string) => {
+    setPlayerAvatarState(avatarId);
+    playerAvatarRef.current = avatarId;
+    savePlayerAvatarLocal(avatarId);
+    if (embeddedHostRef.current) {
+      embeddedHostRef.current.updateHostAvatar(avatarId);
+    }
+  }, []);
+
+  const setPlayerAvatarBg = useCallback((avatarBg: string) => {
+    setPlayerAvatarBgState(avatarBg);
+    playerAvatarBgRef.current = avatarBg;
+    savePlayerAvatarBgLocal(avatarBg);
+    if (embeddedHostRef.current) {
+      embeddedHostRef.current.updateHostAvatarBg(avatarBg);
     }
   }, []);
 
@@ -569,8 +611,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         setConnectionStatus('connecting');
         setErrorMessage(null);
 
-        const engine = new EmbeddedHostEngine(safeName, configRef.current, {
-          onRoomState: (snapshot) => {
+        const engine = new EmbeddedHostEngine(
+          safeName,
+          configRef.current,
+          {
+            onRoomState: (snapshot) => {
             const prevPhase = roomRef.current?.phase;
             setRoom(snapshot);
             setConfig(snapshot.config);
@@ -619,7 +664,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
               router.replace('/results');
             }, 550);
           },
-        });
+        }, playerAvatarRef.current, playerAvatarBgRef.current);
 
         try {
           const {
@@ -648,6 +693,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         {
           type: 'create_room',
           playerName: safeName,
+          avatarId: playerAvatarRef.current,
+          avatarBg: playerAvatarBgRef.current,
           config: configRef.current,
         },
         true
@@ -675,6 +722,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         type: 'create_room',
         roomCode,
         playerName: safeName,
+        avatarId: playerAvatarRef.current,
+        avatarBg: playerAvatarBgRef.current,
         config: configRef.current,
       },
       false
@@ -700,6 +749,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           type: 'join_room',
           roomCode: roomCode.trim().toUpperCase(),
           playerName: safeName,
+          avatarId: playerAvatarRef.current,
+          avatarBg: playerAvatarBgRef.current,
         },
         false
       );
@@ -849,6 +900,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         {
           playerId: pId,
           playerName: safeName,
+          avatarId: playerAvatarRef.current,
+          avatarBg: playerAvatarBgRef.current,
           roundScore: earned,
           totalScore: localTotalScoreRef.current,
           hintsUsed: hintsUsedRef.current,
@@ -1103,6 +1156,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     () => ({
       playerName,
       setPlayerName,
+      playerAvatar,
+      setPlayerAvatar,
+      playerAvatarBg,
+      setPlayerAvatarBg,
       serverUrl,
       setServerUrl,
       connectionStatus,
@@ -1143,6 +1200,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     [
       playerName,
       setPlayerName,
+      playerAvatar,
+      setPlayerAvatar,
+      playerAvatarBg,
+      setPlayerAvatarBg,
       serverUrl,
       setServerUrl,
       connectionStatus,

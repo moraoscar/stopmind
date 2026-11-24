@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { PlayerAvatar } from '../components/PlayerAvatar';
 import { useGame } from '../context/GameContext';
 import {
   COLORS,
@@ -121,14 +122,29 @@ export default function ResultsScreen() {
         {/* Final Winner Celebration */}
         {roundResults.isFinalRound && primaryWinner && (
           <View style={styles.winnerBanner}>
-            <Ionicons name="trophy" size={34} color="#FDE047" />
-            <Text style={styles.winnerEyebrow}>
-              {!isMultiplayer
-                ? 'PARTIDA COMPLETADA'
-                : isFirstPlaceTie
-                  ? 'EMPATE EN PRIMER LUGAR'
-                  : 'GANADOR DE LA PARTIDA'}
-            </Text>
+            <View style={styles.winnerAvatarsRow}>
+              {winners.map((w) => (
+                <PlayerAvatar
+                  key={w.playerId}
+                  avatarId={w.avatarId}
+                  bgId={w.avatarBg}
+                  fallbackName={w.playerName}
+                  size={isFirstPlaceTie ? 62 : 76}
+                  ringColor={COLORS.trophyGold}
+                  ringWidth={3}
+                />
+              ))}
+            </View>
+            <View style={styles.winnerTrophyRow}>
+              <Ionicons name="trophy" size={16} color={COLORS.trophyGold} />
+              <Text style={styles.winnerEyebrow}>
+                {!isMultiplayer
+                  ? 'PARTIDA COMPLETADA'
+                  : isFirstPlaceTie
+                    ? 'EMPATE EN PRIMER LUGAR'
+                    : 'GANADOR DE LA PARTIDA'}
+              </Text>
+            </View>
             <Text style={styles.winnerName}>
               {isFirstPlaceTie
                 ? winners.map((w) => w.playerName).join(' · ')
@@ -199,6 +215,13 @@ export default function ResultsScreen() {
                       {rank}
                     </Text>
                   </View>
+                  <PlayerAvatar
+                    avatarId={entry.avatarId}
+                    bgId={entry.avatarBg}
+                    fallbackName={entry.playerName}
+                    size={38}
+                    ringWidth={2}
+                  />
                   <View style={styles.rankInfo}>
                     <Text style={styles.rankName}>
                       {entry.playerName}
@@ -460,14 +483,25 @@ const styles = StyleSheet.create({
     borderRadius: RADII.modal,
     padding: SPACING.xxl + 2,
     alignItems: 'center',
-    gap: SPACING.xxs,
+    gap: SPACING.xs,
+  },
+  winnerAvatarsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.md,
+    marginBottom: SPACING.xs,
+  },
+  winnerTrophyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
   },
   winnerEyebrow: {
     color: COLORS.trophyGold,
     fontSize: FONT_SIZES.xs,
     fontWeight: FONT_WEIGHTS.extrabold,
     letterSpacing: LETTER_SPACING.wider,
-    marginTop: SPACING.xxs,
   },
   winnerName: {
     color: COLORS.white,

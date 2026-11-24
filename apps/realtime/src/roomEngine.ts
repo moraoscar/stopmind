@@ -16,9 +16,24 @@ import {
 export const MAX_PLAYERS_PER_ROOM = 16;
 export const MAX_MESSAGE_BYTES = 16 * 1024;
 const ROOM_CODE_REGEX = /^[A-Z0-9]{4,6}$/;
+const AVATAR_ID_REGEX = /^[a-z0-9_]{2,24}$/;
 
 export function isValidRoomCode(code: string): boolean {
   return ROOM_CODE_REGEX.test(code);
+}
+
+export function sanitizeAvatarId(raw: unknown): string | undefined {
+  if (typeof raw !== 'string') return undefined;
+  const cleaned = raw.replace(/[\u0000-\u001F\u007F]/g, '').trim().toLowerCase();
+  return AVATAR_ID_REGEX.test(cleaned) ? cleaned : undefined;
+}
+
+const AVATAR_BG_REGEX = /^[a-z0-9_]{2,16}$/;
+
+export function sanitizeAvatarBg(raw: unknown): string | undefined {
+  if (typeof raw !== 'string') return undefined;
+  const cleaned = raw.replace(/[\u0000-\u001F\u007F]/g, '').trim().toLowerCase();
+  return AVATAR_BG_REGEX.test(cleaned) ? cleaned : undefined;
 }
 
 export function sanitizePlayerName(raw: unknown, fallback = 'Jugador'): string {
@@ -46,6 +61,8 @@ export interface RoomTransport {
 interface InternalPlayer {
   id: string;
   name: string;
+  avatarId?: string;
+  avatarBg?: string;
   totalScore: number;
   filledCount: number;
 }
@@ -198,6 +215,8 @@ export class OnlineRoomEngine {
     }
 
     const name = sanitizePlayerName(msg.playerName, 'Anfitrión');
+    const avatarId = sanitizeAvatarId(msg.avatarId);
+    const avatarBg = sanitizeAvatarBg(msg.avatarBg);
     if (msg.config && typeof msg.config === 'object') {
       this.config = sanitizeConfig(msg.config as Partial<GameConfig>);
     }
@@ -208,6 +227,8 @@ export class OnlineRoomEngine {
     this.players.set(clientId, {
       id: clientId,
       name,
+      avatarId,
+      avatarBg,
       totalScore: 0,
       filledCount: 0,
     });
@@ -259,10 +280,14 @@ export class OnlineRoomEngine {
     }
 
     const name = sanitizePlayerName(msg.playerName, 'Jugador');
+    const avatarId = sanitizeAvatarId(msg.avatarId);
+    const avatarBg = sanitizeAvatarBg(msg.avatarBg);
     const existing = this.players.get(clientId);
     this.players.set(clientId, {
       id: clientId,
       name,
+      avatarId: avatarId ?? existing?.avatarId,
+      avatarBg: avatarBg ?? existing?.avatarBg,
       totalScore: existing?.totalScore ?? 0,
       filledCount: existing?.filledCount ?? 0,
     });
@@ -547,6 +572,8 @@ export class OnlineRoomEngine {
       entries: [...this.players.values()].map((p) => ({
         playerId: p.id,
         playerName: p.name,
+        ...(p.avatarId ? { avatarId: p.avatarId } : {}),
+        ...(p.avatarBg ? { avatarBg: p.avatarBg } : {}),
         roundScore: roundScores[p.id] ?? 0,
         totalScore: p.totalScore,
         hintsUsed: this.roundHintsUsed[p.id] ?? 0,
@@ -593,6 +620,8 @@ export class OnlineRoomEngine {
       players: [...this.players.values()].map((p) => ({
         id: p.id,
         name: p.name,
+        ...(p.avatarId ? { avatarId: p.avatarId } : {}),
+        ...(p.avatarBg ? { avatarBg: p.avatarBg } : {}),
         isHost: p.id === this.hostId,
         totalScore: p.totalScore,
         filledCount: p.filledCount,
