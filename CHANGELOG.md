@@ -11,6 +11,11 @@ Todos los cambios relevantes del proyecto se documentan en este archivo siguiend
 
 ## [Unreleased]
 
+### Agregado
+- **Confeti de celebración en pantalla completa para el primer lugar en cada ronda (`ConfettiCelebration`, `celebration.ts`, `results.tsx`)**:
+  - Al finalizar cada ronda (y con lluvia reforzada en los resultados finales), los participantes que ocupen el **1.er lugar** en la tabla de posiciones (incluyendo empates en primer puesto) ven una animación fluida de confeti en toda la pantalla sin bloquear botones ni desplazamiento.
+  - Respeta la preferencia de accesibilidad **Reducir movimiento** del sistema operativo y no se dispara en rondas sin puntos.
+
 ---
 
 ## [1.1.0] - 2026-11-22

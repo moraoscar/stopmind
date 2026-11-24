@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { ConfettiCelebration } from '../components/ConfettiCelebration';
 import { useGame } from '../context/GameContext';
 import {
   COLORS,
@@ -18,6 +19,10 @@ import {
   SPACING,
 } from '../theme/tokens';
 import { ScoreReason } from '../types/game';
+import {
+  buildCelebrationTriggerKey,
+  shouldCelebrateFirstPlace,
+} from '../utils/celebration';
 import { recordCompletedMatchAndMaybeRequestReview } from '../utils/storeReview';
 
 function getReasonLabel(
@@ -88,6 +93,8 @@ export default function ResultsScreen() {
   );
   const isFirstPlaceTie = winners.length > 1;
   const primaryWinner = winners[0];
+  const celebrateFirstPlace = shouldCelebrateFirstPlace(roundResults, playerId);
+  const celebrationKey = buildCelebrationTriggerKey(roundResults);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -407,6 +414,13 @@ export default function ResultsScreen() {
           </View>
         )}
       </View>
+
+      {/* Full-screen confetti celebration for 1st-place participant(s) each round */}
+      <ConfettiCelebration
+        active={celebrateFirstPlace}
+        triggerKey={celebrationKey}
+        intensity={roundResults.isFinalRound ? 'final' : 'round'}
+      />
     </SafeAreaView>
   );
 }
