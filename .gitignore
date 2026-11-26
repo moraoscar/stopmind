@@ -8,7 +8,10 @@ apps/mobile/.expo/
 apps/mobile/dist/
 apps/mobile/web-build/
 npm-debug.*
+# Credentials & secrets
 *.jks
+*.keystore
+!apps/mobile/android/app/debug.keystore
 *.p8
 *.p12
 *.key
@@ -17,7 +20,23 @@ npm-debug.*
 .env
 .env.local
 .env.*.local
-.DS_Store
+.env.release.local
 *.pem
+
+# Compiled mobile binaries & local build caches
+releases/
+*.apk
+*.aab
+*.aar
+*.ipa
+*.xcarchive
+.kotlin/
+.wrangler/
+apps/mobile/android/app/release/
+apps/mobile/modules/*/android/build/
+apps/mobile/modules/*/android/.gradle/
+
+# OS & misc
+.DS_Store
 *.tsbuildinfo
 sbom.cdx.json
