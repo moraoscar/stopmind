@@ -11,7 +11,21 @@ Todos los cambios relevantes del proyecto se documentan en este archivo siguiend
 
 ## [Unreleased]
 
-### Agregado
+---
+
+## [1.2.1] - 2026-11-27
+
+### Novedades para usuarios *(listo para App Store / Google Play)*
+```text
+¡STOPMind! ahora es aún más divertido, personalizable y pulido!
+
+• Avatares y colores: elige entre 16 personajes inclusivos y 12 colores de fondo para destacar en cada sala y en el podio. Tu avatar se guarda en tu teléfono.
+• Celebración con confeti: quienes queden en 1.er lugar en cada ronda (y en el podio final) celebran con confeti en toda la pantalla.
+• Finaliza la partida cuando quieras: cierra el juego en cualquier ronda conservando los puntajes acumulados para ver al ganador al instante.
+• Mejora visual: corregido el ajuste del selector de cantidad de rondas (+ / −) en pantallas compactas para que siempre quede bien alineado.
+```
+
+### Detalle técnico (Agregado)
 - **Avatares inclusivos sin fondo + selector de color de fondo personalizable (`apps/mobile/assets/avatars/`, `AvatarPickerModal`, `PlayerAvatar`, `playerStorage.ts`)**:
   - 16 ilustraciones 3D transparentes incluidas en la app cubriendo niños, niñas, jóvenes, adultos (con y sin barba/bigote), calvos (con y sin barba), mujeres de cabello corto/largo/rizos, abuelos y abuelas con diversidad de tonos de piel, y 12 colores de fondo a elección del jugador.
   - Guardado 100 % local en el dispositivo junto al apodo, selector con vista previa en vivo en Inicio y Unirse, y sincronización automática de personaje + color en salas **Wi-Fi local**, **Modo Online** y **Resultados / Podio final** (retrocompatible).
@@ -21,6 +35,11 @@ Todos los cambios relevantes del proyecto se documentan en este archivo siguiend
 - **Confeti de celebración en pantalla completa para el primer lugar en cada ronda (`ConfettiCelebration`, `celebration.ts`, `results.tsx`)**:
   - Al finalizar cada ronda (y con lluvia reforzada en los resultados finales), los participantes que ocupen el **1.er lugar** en la tabla de posiciones (incluyendo empates en primer puesto) ven una animación fluida de confeti en toda la pantalla sin bloquear botones ni desplazamiento.
   - Respeta la preferencia de accesibilidad **Reducir movimiento** del sistema operativo y no se dispara en rondas sin puntos.
+- **Pipeline local de release para macOS (`scripts/release-mobile.mjs`, `docs/pipeline-release-local.md`)**:
+  - Automatiza validación (`lint`, `typecheck`, `test`), sincronización nativa, compilación firmada de Android (`.apk` + `.aab`) y archivo/subida de iOS (`.ipa`) a App Store Connect / TestFlight en un solo comando (`npm run release:mobile`).
+
+### Corregido
+- **Selector de cantidad de rondas en configuración de partida (`apps/mobile/src/app/setup.tsx`)**: agregado ajuste flexible (`flex: 1`, `minWidth: 0`) al bloque de título/subtítulo y `flexShrink: 0` al contador `− / +` para evitar que los botones se desborden fuera de la tarjeta en pantallas pequeñas.
 
 ---
 
