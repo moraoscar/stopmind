@@ -7,28 +7,28 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		086133AEC5DDD1D170F0111A /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6201D1C0D756169B038719A2 /* ExpoModulesProvider.swift */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		28486E8A82A6FF1DBD2C924D /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 5D652DD74FB07D658448380A /* PrivacyInfo.xcprivacy */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		603F613800A9C35005E0B77A /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 6A4F4C25B2042A6077E8C5D3 /* PrivacyInfo.xcprivacy */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
-		EA482225C45FBE653A62A597 /* libPods-StopMind.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CAE265FAF9A26109AF3EBB6D /* libPods-StopMind.a */; };
+		C65F8D61C63E47D5C1EFE192 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0C63776A3CAA81A85A2E483 /* ExpoModulesProvider.swift */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 		F11748442D0307B40044C1D9 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748432D0307B40044C1D9 /* SceneDelegate.swift */; };
+		F7C30768A6862444E396498C /* libPods-StopMind.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7836E11217480E0D5A4A6FE7 /* libPods-StopMind.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		13B07F961A680F5B00A75B9A /* StopMind.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = StopMind.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = StopMind/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = StopMind/Info.plist; sourceTree = "<group>"; };
-		6201D1C0D756169B038719A2 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-StopMind/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
-		6A4F4C25B2042A6077E8C5D3 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = StopMind/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		9C2A29119F9D10BF05A13D59 /* Pods-StopMind.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-StopMind.debug.xcconfig"; path = "Target Support Files/Pods-StopMind/Pods-StopMind.debug.xcconfig"; sourceTree = "<group>"; };
+		51BCCB0BBABA620ED6E5B0CB /* Pods-StopMind.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-StopMind.release.xcconfig"; path = "Target Support Files/Pods-StopMind/Pods-StopMind.release.xcconfig"; sourceTree = "<group>"; };
+		5D652DD74FB07D658448380A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = StopMind/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		7836E11217480E0D5A4A6FE7 /* libPods-StopMind.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-StopMind.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A7FAD224162F7620061C34FB /* Pods-StopMind.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-StopMind.debug.xcconfig"; path = "Target Support Files/Pods-StopMind/Pods-StopMind.debug.xcconfig"; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = StopMind/SplashScreen.storyboard; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		CAE265FAF9A26109AF3EBB6D /* libPods-StopMind.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-StopMind.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		D36968384DDC4B7FFC3C6FA8 /* Pods-StopMind.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-StopMind.release.xcconfig"; path = "Target Support Files/Pods-StopMind/Pods-StopMind.release.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
+		F0C63776A3CAA81A85A2E483 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-StopMind/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = StopMind/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748432D0307B40044C1D9 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SceneDelegate.swift; path = StopMind/SceneDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* StopMind-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "StopMind-Bridging-Header.h"; path = "StopMind/StopMind-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -39,7 +39,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				EA482225C45FBE653A62A597 /* libPods-StopMind.a in Frameworks */,
+				F7C30768A6862444E396498C /* libPods-StopMind.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -56,7 +56,7 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				6A4F4C25B2042A6077E8C5D3 /* PrivacyInfo.xcprivacy */,
+				5D652DD74FB07D658448380A /* PrivacyInfo.xcprivacy */,
 			);
 			name = StopMind;
 			sourceTree = "<group>";
@@ -65,9 +65,25 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				CAE265FAF9A26109AF3EBB6D /* libPods-StopMind.a */,
+				7836E11217480E0D5A4A6FE7 /* libPods-StopMind.a */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		3AD40586FDE92E1D1204F2FB /* ExpoModulesProviders */ = {
+			isa = PBXGroup;
+			children = (
+				5F6F260F5C63F425B71E76F8 /* StopMind */,
+			);
+			name = ExpoModulesProviders;
+			sourceTree = "<group>";
+		};
+		5F6F260F5C63F425B71E76F8 /* StopMind */ = {
+			isa = PBXGroup;
+			children = (
+				F0C63776A3CAA81A85A2E483 /* ExpoModulesProvider.swift */,
+			);
+			name = StopMind;
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -84,8 +100,8 @@
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
-				CE2AC51C73E11E72CA80063B /* Pods */,
-				CA5A4A60773F3E692A01E70F /* ExpoModulesProviders */,
+				A93E643B81EC065705F234CC /* Pods */,
+				3AD40586FDE92E1D1204F2FB /* ExpoModulesProviders */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -100,6 +116,16 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		A93E643B81EC065705F234CC /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				A7FAD224162F7620061C34FB /* Pods-StopMind.debug.xcconfig */,
+				51BCCB0BBABA620ED6E5B0CB /* Pods-StopMind.release.xcconfig */,
+			);
+			name = Pods;
+			path = Pods;
+			sourceTree = "<group>";
+		};
 		BB2F792B24A3F905000567C9 /* Supporting */ = {
 			isa = PBXGroup;
 			children = (
@@ -107,32 +133,6 @@
 			);
 			name = Supporting;
 			path = StopMind/Supporting;
-			sourceTree = "<group>";
-		};
-		CA5A4A60773F3E692A01E70F /* ExpoModulesProviders */ = {
-			isa = PBXGroup;
-			children = (
-				E800A40E4F2E8739BFB62A83 /* StopMind */,
-			);
-			name = ExpoModulesProviders;
-			sourceTree = "<group>";
-		};
-		CE2AC51C73E11E72CA80063B /* Pods */ = {
-			isa = PBXGroup;
-			children = (
-				9C2A29119F9D10BF05A13D59 /* Pods-StopMind.debug.xcconfig */,
-				D36968384DDC4B7FFC3C6FA8 /* Pods-StopMind.release.xcconfig */,
-			);
-			name = Pods;
-			path = Pods;
-			sourceTree = "<group>";
-		};
-		E800A40E4F2E8739BFB62A83 /* StopMind */ = {
-			isa = PBXGroup;
-			children = (
-				6201D1C0D756169B038719A2 /* ExpoModulesProvider.swift */,
-			);
-			name = StopMind;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -143,13 +143,13 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "StopMind" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				779B25B4D9877F8383E2919F /* [Expo] Configure project */,
+				C0A2BACD48F82F6A316153D0 /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
-				B1407005B71084F3C872CA78 /* [CP] Embed Pods Frameworks */,
+				E64B7B58FD3BE73F1AC54FB0 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -199,7 +199,7 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				603F613800A9C35005E0B77A /* PrivacyInfo.xcprivacy in Resources */,
+				28486E8A82A6FF1DBD2C924D /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -245,30 +245,6 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		779B25B4D9877F8383E2919F /* [Expo] Configure project */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"$(SRCROOT)/.xcode.env",
-				"$(SRCROOT)/.xcode.env.local",
-				"$(SRCROOT)/StopMind/StopMind.entitlements",
-				"$(SRCROOT)/Pods/Target Support Files/Pods-StopMind/expo-configure-project.sh",
-			);
-			name = "[Expo] Configure project";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(SRCROOT)/Pods/Target Support Files/Pods-StopMind/ExpoModulesProvider.swift",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-StopMind/expo-configure-project.sh\"\n";
-		};
 		800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -301,7 +277,31 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-StopMind/Pods-StopMind-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		B1407005B71084F3C872CA78 /* [CP] Embed Pods Frameworks */ = {
+		C0A2BACD48F82F6A316153D0 /* [Expo] Configure project */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/.xcode.env",
+				"$(SRCROOT)/.xcode.env.local",
+				"$(SRCROOT)/StopMind/StopMind.entitlements",
+				"$(SRCROOT)/Pods/Target Support Files/Pods-StopMind/expo-configure-project.sh",
+			);
+			name = "[Expo] Configure project";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(SRCROOT)/Pods/Target Support Files/Pods-StopMind/ExpoModulesProvider.swift",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-StopMind/expo-configure-project.sh\"\n";
+		};
+		E64B7B58FD3BE73F1AC54FB0 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -348,7 +348,7 @@
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
 				F11748442D0307B40044C1D9 /* SceneDelegate.swift in Sources */,
-				086133AEC5DDD1D170F0111A /* ExpoModulesProvider.swift in Sources */,
+				C65F8D61C63E47D5C1EFE192 /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -357,7 +357,7 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 9C2A29119F9D10BF05A13D59 /* Pods-StopMind.debug.xcconfig */;
+			baseConfigurationReference = A7FAD224162F7620061C34FB /* Pods-StopMind.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -394,7 +394,7 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = D36968384DDC4B7FFC3C6FA8 /* Pods-StopMind.release.xcconfig */;
+			baseConfigurationReference = 51BCCB0BBABA620ED6E5B0CB /* Pods-StopMind.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;

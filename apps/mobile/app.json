@@ -3,14 +3,14 @@
     "name": "StopMind!",
     "slug": "stopmind",
     "scheme": "stopmind",
-    "version": "1.2.0",
+    "version": "1.2.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.cxvone.stopmind",
-      "buildNumber": "5",
+      "buildNumber": "1",
       "associatedDomains": [
         "applinks:stopmind.cxvone.com"
       ],
@@ -28,7 +28,7 @@
     },
     "android": {
       "package": "com.cxvone.stopmind",
-      "versionCode": 5,
+      "versionCode": 6,
       "adaptiveIcon": {
         "backgroundColor": "#001C55",
         "foregroundImage": "./assets/android-icon-foreground.png",

@@ -418,9 +418,9 @@ export default function SetupScreen() {
           {/* 3. Rounds + Letter Validation */}
           <View style={styles.card}>
             <View style={styles.roundsRow}>
-              <View style={styles.cardTitleRow}>
+              <View style={[styles.cardTitleRow, styles.roundsInfoWrap]}>
                 <Ionicons name="repeat" size={18} color={COLORS.emerald} />
-                <View>
+                <View style={styles.switchTextWrap}>
                   <Text style={styles.cardTitle}>Cantidad de rondas</Text>
                   <Text style={styles.cardSubSmall}>
                     Cada ronda sortea una letra diferente
@@ -1175,11 +1175,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: SPACING.md,
+  },
+  roundsInfoWrap: {
+    flex: 1,
+    minWidth: 0,
   },
   counterBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.md,
+    flexShrink: 0,
+    gap: SPACING.sm,
     backgroundColor: COLORS.bg,
     padding: SPACING.xxs,
     borderRadius: RADII.lg,
@@ -1216,6 +1222,7 @@ const styles = StyleSheet.create({
   },
   switchTextWrap: {
     flex: 1,
+    minWidth: 0,
   },
   switchTitle: {
     fontSize: FONT_SIZES.base,
